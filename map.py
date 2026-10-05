@@ -1412,7 +1412,7 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
     return HTML_OUTPUT
 
 
-def generate_static_png(lon, lat, target_name, output_path=None):
+def generate_static_png(lon, lat, target_name, output_path=None, show_labels=True):
     """Generate high-visibility Light Mode static PNG with SOI boundary & dotted borders."""
     try:
         import matplotlib
@@ -1451,31 +1451,33 @@ def generate_static_png(lon, lat, target_name, output_path=None):
             ax.add_geometries([geom], crs=ccrs.PlateCarree(), facecolor="none",
                               edgecolor="#718096", linewidth=1.0, linestyle="--", alpha=0.9)
 
-        # 3. Ocean Labels
-        for ocean in world_data.get("oceans", []):
-            pt = ocean["centroid"]
-            ax.text(pt[0], pt[1], ocean["label"], transform=ccrs.PlateCarree(),
-                    fontsize=8.5, fontstyle="italic", color="#3f7893", ha="center", va="center",
-                    fontweight="bold")
+        # 3. Ocean Labels (if enabled)
+        if show_labels:
+            for ocean in world_data.get("oceans", []):
+                pt = ocean["centroid"]
+                ax.text(pt[0], pt[1], ocean["label"], transform=ccrs.PlateCarree(),
+                        fontsize=8.5, fontstyle="italic", color="#3f7893", ha="center", va="center",
+                        fontweight="bold")
 
-        # 4. BOLD Country Labels
-        major_countries = {
-            "India", "China", "United States", "Brazil", "Russia", "Canada", "Australia",
-            "Argentina", "Algeria", "DR Congo", "Saudi Arabia", "Mexico", "Indonesia",
-            "South Africa", "Kazakhstan", "Egypt", "France", "Germany", "United Kingdom",
-            "Japan", "Somalia", "Cyprus", "UAE", "CAR", "Congo", "Serbia"
-        }
-        if target_name and target_name != "World":
-            major_countries.add(target_name)
+        # 4. BOLD Country Labels (if enabled)
+        if show_labels:
+            major_countries = {
+                "India", "China", "United States", "Brazil", "Russia", "Canada", "Australia",
+                "Argentina", "Algeria", "DR Congo", "Saudi Arabia", "Mexico", "Indonesia",
+                "South Africa", "Kazakhstan", "Egypt", "France", "Germany", "United Kingdom",
+                "Japan", "Somalia", "Cyprus", "UAE", "CAR", "Congo", "Serbia"
+            }
+            if target_name and target_name != "World":
+                major_countries.add(target_name)
 
-        for feat in world_data["features"]:
-            name = feat["properties"]["name"]
-            if name in major_countries:
-                centroid = feat["properties"]["centroid"]
-                ax.text(centroid[0], centroid[1], name, transform=ccrs.PlateCarree(),
-                        fontsize=7.5, fontweight="bold",
-                        color="#0f172a", ha="center", va="center",
-                        bbox=dict(boxstyle="square,pad=0.12", facecolor="#ffffff", alpha=0.75, edgecolor="none"))
+            for feat in world_data["features"]:
+                name = feat["properties"]["name"]
+                if name in major_countries:
+                    centroid = feat["properties"]["centroid"]
+                    ax.text(centroid[0], centroid[1], name, transform=ccrs.PlateCarree(),
+                            fontsize=7.5, fontweight="bold",
+                            color="#0f172a", ha="center", va="center",
+                            bbox=dict(boxstyle="square,pad=0.12", facecolor="#ffffff", alpha=0.75, edgecolor="none"))
 
         gl = ax.gridlines(draw_labels=True, linewidth=0.5, color="#c8deec", alpha=0.8, linestyle="--")
         gl.top_labels = True
@@ -1485,8 +1487,9 @@ def generate_static_png(lon, lat, target_name, output_path=None):
         gl.xlabel_style = {"size": 8, "color": "#64748b"}
         gl.ylabel_style = {"size": 8, "color": "#64748b"}
 
+        label_note = "" if show_labels else " (Unlabelled Outline)"
         title_suffix = f" · Centered on {target_name} ({lon:+.1f}°E, {lat:+.1f}°N)" if target_name != "World" else f" · Centered at Lon {lon:+.1f}°"
-        plt.title(f"Equal Earth Projection{title_suffix}\n(Survey of India Official Sovereign Boundaries & Google Maps Format)",
+        plt.title(f"Equal Earth Projection{title_suffix}{label_note}\n(Survey of India Official Sovereign Boundaries & Google Maps Format)",
                   fontsize=12, fontweight="bold", color="#0f172a", pad=12)
 
         if not output_path:

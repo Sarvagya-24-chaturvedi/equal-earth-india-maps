@@ -17,10 +17,13 @@ An open-source cartographic suite and interactive web application for generating
 
 ## 🗺️ Previews
 
-### 1. Centered on Prime Meridian (0°) — Default Global View
+### 1. Centered on Prime Meridian (0°) — Default Global View (Labelled)
 ![Equal Earth Map Centered on Prime Meridian (0°)](equal_earth_prime_meridian.png)
 
-### 2. Centered on India (78°E) — Survey of India Sovereign Boundary
+### 2. Centered on Prime Meridian (0°) — Default Global View (Unlabelled Outline)
+![Equal Earth Map Centered on Prime Meridian (0°) - Unlabelled](equal_earth_prime_meridian_unlabeled.png)
+
+### 3. Centered on India (78°E) — Survey of India Sovereign Boundary
 ![Equal Earth Map Centered on India (78°E)](equal_earth_india.png)
 
 ---
