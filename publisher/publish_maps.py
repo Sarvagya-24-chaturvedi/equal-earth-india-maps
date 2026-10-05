@@ -139,27 +139,21 @@ def render_map(config, world_data, output_dir):
     ax = plt.axes(projection=ccrs.EqualEarth(central_longitude=lon))
     ax.set_facecolor(theme["ocean"])
 
-    # 1. Base Countries
+    # 1. Base Countries (Clean uniform fill by default)
     for feat in world_data["features"]:
         geom = shape(feat["geometry"])
         name = feat["properties"]["name"]
 
-        if name == "India":
-            face = theme["india_fill"]
-            edge = theme["india_edge"]
-            lw = 1.3
-        else:
-            face = theme["land"]
-            edge = theme["land_edge"]
-            lw = 0.45
+        ax.add_geometries([geom], crs=ccrs.PlateCarree(),
+                          facecolor=theme["land"],
+                          edgecolor=theme["land_edge"],
+                          linewidth=0.45)
 
-        ax.add_geometries([geom], crs=ccrs.PlateCarree(), facecolor=face, edgecolor=edge, linewidth=lw)
-
-    # 2. Dotted Disputed Borders (Much lighter than recognised borders)
+    # 2. Light Dashed Disputed Borders (Kosovo/Serbia, Morocco/SADR, Bir Tawil)
     for db in world_data.get("dashed_borders", []):
         geom = shape(db["geometry"])
         ax.add_geometries([geom], crs=ccrs.PlateCarree(), facecolor="none",
-                          edgecolor="#b0bec5", linewidth=0.9, linestyle=":", alpha=0.9)
+                          edgecolor="#718096", linewidth=1.0, linestyle="--", alpha=0.9)
 
     # 3. Oceans
     for ocean in world_data.get("oceans", []):

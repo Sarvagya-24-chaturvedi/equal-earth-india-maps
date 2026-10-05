@@ -1,16 +1,15 @@
 """
 Equal Earth Map Generator & Interactive Viewer (Google Maps Format)
 ===================================================================
-- Survey of India (SOI) 100% official sovereign boundary for India
-- Somaliland merged into Somalia; Northern Cyprus & military bases merged into Cyprus
-- Foreign bases (Baykonur, Akrotiri, Dhekelia, Guantanamo) & Brazilian Island removed/merged
-- Disputed borders shown as light, delicate dotted lines (much lighter than recognized borders)
-- ALL country names bolded (Google Maps typography)
-- Short names and acronyms used (e.g., USA, UAE, CAR, DR Congo, Bosnia & Herz., Dominican Rep.)
-- Sovereign countries strictly prioritized over dependencies when zoomed out
-- All Oceans labeled with ability to center map around them
-- Dynamic Google Maps-style label scaling (no giant fonts on zoom)
-- 100% offline & self-contained
+- India is NOT highlighted by default (at 0° lon or on reset).
+- ONLY the searched or selected country gets highlighted in yellow.
+- High-quality exports: High-Res JPEG, Vector PDF, and Self-Contained SVG (with embedded background & styles).
+- Disputed borders (Serbia-Kosovo, Morocco-SADR, Bir Tawil & Hala'ib) in light dashed lines (Google Maps style).
+- All country names bolded.
+- Short names and acronyms (USA, UAE, CAR, DR Congo, etc.).
+- Sovereign countries prioritized over dependencies when zoomed out.
+- All Oceans labeled with ability to center map around them.
+- Survey of India (SOI) 100% official sovereign boundary for India.
 """
 
 import os
@@ -23,7 +22,9 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 DATA_PATH = BASE_DIR / "world_data.json"
 D3_PATH = BASE_DIR / "d3.v7.min.js"
+JSPDF_PATH = BASE_DIR / "jspdf.umd.min.js"
 HTML_OUTPUT = BASE_DIR / "equal_earth_interactive.html"
+ROOT_INDEX = BASE_DIR / "index.html"
 
 os.environ.setdefault("MPLCONFIGDIR", str(BASE_DIR / ".mpl_cache"))
 
@@ -93,6 +94,15 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
     </script>
     """
 
+    jspdf_script_tag = """
+    <script src="jspdf.umd.min.js"></script>
+    <script>
+      if (typeof window.jspdf === 'undefined') {
+        document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\\/script>');
+      }
+    </script>
+    """
+
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -100,6 +110,7 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Equal Earth Map · Google Maps Format (Light Mode)</title>
   {d3_script_tag}
+  {jspdf_script_tag}
   <style>
     :root {{
       --bg-ocean: #d8ecf8;
@@ -109,7 +120,8 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       --text-muted: #64748b;
       --primary: #2563eb;
       --primary-hover: #1d4ed8;
-      --accent-india: #f97316;
+      --accent-highlight: #fef3c7;
+      --accent-highlight-border: #d97706;
       --accent-micro: #e11d48;
       --country-fill: #ffffff;
       --country-stroke: #94a3b8;
@@ -131,7 +143,6 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       user-select: none;
     }}
 
-    /* Top Navigation & Controls */
     .top-bar {{
       position: absolute;
       top: 14px;
@@ -171,11 +182,11 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
     }}
 
     .badge-soi {{
-      background: #ffedd5;
-      color: #9a3412;
-      border: 1px solid #fed7aa;
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
       font-size: 10px;
-      font-weight: 800;
+      font-weight: 700;
       padding: 2px 7px;
       border-radius: 999px;
       letter-spacing: 0.3px;
@@ -191,14 +202,14 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       padding: 7px 12px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
     }}
 
     .ctrl-group {{
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       font-size: 12px;
       font-weight: 700;
       color: var(--text-main);
@@ -212,13 +223,13 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
     }}
 
     input[type="range"] {{
-      width: 100px;
+      width: 95px;
       accent-color: var(--primary);
       cursor: pointer;
     }}
 
     .num-box {{
-      width: 52px;
+      width: 50px;
       padding: 3px 5px;
       border: 1px solid var(--panel-border);
       border-radius: 5px;
@@ -244,7 +255,7 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
     }}
 
     .btn {{
-      padding: 5px 11px;
+      padding: 5px 10px;
       border: 1px solid var(--panel-border);
       background: #fff;
       border-radius: 6px;
@@ -271,6 +282,17 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
     .btn-primary:hover {{
       background: var(--primary-hover);
       border-color: var(--primary-hover);
+    }}
+
+    .btn-success {{
+      background: #059669;
+      border-color: #059669;
+      color: #fff;
+    }}
+
+    .btn-success:hover {{
+      background: #047857;
+      border-color: #047857;
     }}
 
     /* Map Display Viewport */
@@ -312,7 +334,7 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       stroke-width: 0.55px;
       stroke-linejoin: round;
       cursor: pointer;
-      transition: fill 0.1s ease;
+      transition: fill 0.15s ease, stroke-width 0.15s ease;
     }}
 
     .country:hover {{
@@ -321,30 +343,29 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       stroke-width: 1.1px;
     }}
 
-    .country-india {{
+    /* Highlighted Country: ONLY applied when searched or clicked */
+    .country.highlighted {{
       fill: #fef3c7 !important;
       stroke: #d97706 !important;
-      stroke-width: 1.2px !important;
+      stroke-width: 1.4px !important;
     }}
 
-    .country-india:hover {{
+    .country.highlighted:hover {{
       fill: #fde68a !important;
       stroke: #b45309 !important;
-      stroke-width: 1.5px !important;
     }}
 
-    /* DOTTED DISPUTED BORDERS (Much lighter than recognised borders) */
-    .dotted-disputed {{
+    /* DISPUTED BORDERS (Light Dashed Line: Serbia-Kosovo, Morocco-SADR, Bir Tawil) */
+    .dashed-disputed {{
       fill: none;
-      stroke: #b0bec5; /* Light soft gray */
-      stroke-width: 1.0px;
-      stroke-dasharray: 1.5, 2.5; /* Fine dotted style */
+      stroke: #718096;
+      stroke-width: 1.1px;
+      stroke-dasharray: 3.5, 3.0;
       stroke-linecap: round;
-      opacity: 0.85;
+      opacity: 0.9;
       pointer-events: none;
     }}
 
-    /* Micronation Pins */
     .micronation-pin {{
       fill: var(--accent-micro);
       stroke: #ffffff;
@@ -358,11 +379,11 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       filter: drop-shadow(0 0 5px rgba(225, 29, 72, 0.7));
     }}
 
-    /* BOLD ALL COUNTRIES NAMES (Google Maps Format) */
+    /* Bold Country Names */
     .country-label {{
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       font-size: 11px;
-      font-weight: 700; /* BOLD */
+      font-weight: 700;
       fill: #0f172a;
       stroke: #ffffff;
       stroke-width: 2.8px;
@@ -426,7 +447,6 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       pointer-events: none;
     }}
 
-    /* Info Sidebar */
     .info-panel {{
       position: absolute;
       bottom: 20px;
@@ -515,11 +535,11 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       gap: 5px;
     }}
 
-    .swatch-dotted {{
+    .swatch-dashed {{
       display: inline-block;
       width: 16px;
       height: 0;
-      border-top: 2px dotted #b0bec5;
+      border-top: 2px dashed #718096;
     }}
   </style>
 </head>
@@ -531,35 +551,31 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       <div class="title-area">
         <h1>
           Equal Earth Map
-          <span class="badge-soi">SOI Official India Map</span>
+          <span class="badge-soi">SOI Official India Boundary</span>
         </h1>
-        <p>Google Maps format · Bold country names · Light dotted disputed borders · Oceans enabled</p>
+        <p>Google Maps format · Bold names · Light dashed disputed borders</p>
       </div>
     </div>
 
     <div class="card controls-strip">
-      <!-- Search Country / Ocean -->
       <div class="ctrl-group">
         <label for="country-search">Search:</label>
-        <input type="text" id="country-search" list="target-list" placeholder="Search country, ocean..." style="width: 190px;">
+        <input type="text" id="country-search" list="target-list" placeholder="Search country, ocean..." style="width: 180px;">
         <datalist id="target-list"></datalist>
       </div>
 
-      <!-- Central Longitude -->
       <div class="ctrl-group">
         <label for="lon-slider">Center Lon:</label>
         <input type="range" id="lon-slider" min="-180" max="180" step="1" value="{initial_lon}">
         <input type="number" id="lon-box" class="num-box" min="-180" max="180" step="1" value="{initial_lon}">
       </div>
 
-      <!-- Central Latitude -->
       <div class="ctrl-group">
         <label for="lat-slider">Center Lat:</label>
         <input type="range" id="lat-slider" min="-90" max="90" step="1" value="{initial_lat}">
         <input type="number" id="lat-box" class="num-box" min="-90" max="90" step="1" value="{initial_lat}">
       </div>
 
-      <!-- Projection Mode -->
       <div class="ctrl-group">
         <label for="proj-mode">Adjustment:</label>
         <select id="proj-mode">
@@ -570,7 +586,11 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
 
       <button id="toggle-labels" class="btn">Labels: ON</button>
       <button id="reset-btn" class="btn">Reset</button>
-      <button id="export-svg-btn" class="btn btn-primary">Export SVG</button>
+
+      <!-- Download Options -->
+      <button id="export-jpg-btn" class="btn btn-primary">Download JPEG</button>
+      <button id="export-pdf-btn" class="btn btn-success">Download PDF</button>
+      <button id="export-svg-btn" class="btn">Download SVG</button>
     </div>
   </div>
 
@@ -579,22 +599,19 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
     <svg id="map-svg"></svg>
   </div>
 
-  <!-- Footer Tip -->
   <div class="card quick-tips">
     <div class="tip-item">
-      <span style="display:inline-block; width:10px; height:10px; background:#fef3c7; border:1px solid #d97706; border-radius:2px;"></span>
-      <span>India (Survey of India 100% Official Border)</span>
+      <span class="swatch-dashed"></span>
+      <span>Disputed Borders (Kosovo/Serbia, Morocco/SADR, Bir Tawil)</span>
     </div>
     <div class="tip-item">
-      <span class="swatch-dotted"></span>
-      <span>Dotted Disputed Borders (Lighter than Recognized Borders)</span>
+      <span>🟡 Yellow highlight appears ONLY when country is searched</span>
     </div>
     <div class="tip-item">
       <span>🖱️ Click any country or ocean to open its Wikipedia page</span>
     </div>
   </div>
 
-  <!-- Sidebar Card -->
   <div class="card info-panel" id="info-panel">
     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
       <h3 id="info-name">Name</h3>
@@ -613,7 +630,6 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
 
   <div id="tooltip"></div>
 
-  <!-- Embedded World Data -->
   <script>
     const WORLD_DATA = {geojson_str};
     const INITIAL_LON = {initial_lon};
@@ -641,19 +657,21 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
     const oceanLayer = g.append("path").attr("class", "ocean-sphere");
     const graticuleLayer = g.append("g");
     const countryLayer = g.append("g");
-    const dottedBordersLayer = g.append("g");
+    const dashedBordersLayer = g.append("g");
     const oceanLabelsLayer = g.append("g");
     const micronationLayer = g.append("g");
     const labelLayer = g.append("g");
 
-    // State
+    // State Variables
     let currentLon = INITIAL_LON;
     let currentLat = INITIAL_LAT;
     let currentMode = INITIAL_MODE;
     let currentZoomK = 1.0;
     let showLabels = true;
+    
+    // Highlight state: null by default (no country highlighted unless searched)
+    let highlightedCountry = (INITIAL_TARGET && INITIAL_TARGET !== "World") ? INITIAL_TARGET : null;
 
-    // Zoom handler
     const zoom = d3.zoom()
       .scaleExtent([0.8, 16])
       .on("zoom", (event) => {{
@@ -664,7 +682,7 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
 
     svg.call(zoom);
 
-    // Populate Search Datalist
+    // Populate Datalist
     const datalist = document.getElementById("target-list");
     WORLD_DATA.oceans.forEach(o => {{
       const opt = document.createElement("option");
@@ -678,12 +696,11 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
     }});
 
     const countryFills = [
-      "#ffffff", "#f8fafc", "#f1f5f9", "#e2e8f0", "#fef3c7",
+      "#ffffff", "#f8fafc", "#f1f5f9", "#e2e8f0", "#ffffff",
       "#ecfdf5", "#f0fdf4", "#eff6ff", "#f5f3ff", "#faf5ff"
     ];
 
     function getCountryFill(name, i) {{
-      if (name === "India") return "#fef3c7";
       return countryFills[i % countryFills.length];
     }}
 
@@ -738,23 +755,38 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
 
       countries.join(
         enter => enter.append("path")
-          .attr("class", d => d.properties.name === "India" ? "country country-india" : "country")
-          .attr("fill", (d, i) => getCountryFill(d.properties.name, i))
+          .attr("class", d => {{
+            const isMatch = (highlightedCountry && d.properties.name.toLowerCase() === highlightedCountry.toLowerCase());
+            return isMatch ? "country highlighted" : "country";
+          }})
+          .attr("fill", (d, i) => {{
+            const isMatch = (highlightedCountry && d.properties.name.toLowerCase() === highlightedCountry.toLowerCase());
+            return isMatch ? "#fef3c7" : getCountryFill(d.properties.name, i);
+          }})
           .attr("d", pathGenerator)
           .on("mouseenter", handleMouseEnter)
           .on("mousemove", handleMouseMove)
           .on("mouseleave", handleMouseLeave)
           .on("click", handleCountryClick),
-        update => update.attr("d", pathGenerator)
+        update => update
+          .attr("class", d => {{
+            const isMatch = (highlightedCountry && d.properties.name.toLowerCase() === highlightedCountry.toLowerCase());
+            return isMatch ? "country highlighted" : "country";
+          }})
+          .attr("fill", (d, i) => {{
+            const isMatch = (highlightedCountry && d.properties.name.toLowerCase() === highlightedCountry.toLowerCase());
+            return isMatch ? "#fef3c7" : getCountryFill(d.properties.name, i);
+          }})
+          .attr("d", pathGenerator)
       );
 
-      // Dotted Disputed Borders (Lighter than recognized borders)
-      dottedBordersLayer.selectAll("*").remove();
+      // Light Dashed Disputed Borders
+      dashedBordersLayer.selectAll("*").remove();
       if (WORLD_DATA.dashed_borders) {{
         WORLD_DATA.dashed_borders.forEach(db => {{
-          dottedBordersLayer.append("path")
+          dashedBordersLayer.append("path")
             .datum(db)
-            .attr("class", "dotted-disputed")
+            .attr("class", "dashed-disputed")
             .attr("d", pathGenerator);
         }});
       }}
@@ -858,7 +890,6 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       }});
     }}
 
-    // Dynamic Google Maps label scaling and prioritization
     function updateLabelStylesAndVisibility(k) {{
       const baseCountryPx = Math.max(9.0, 11.5 - Math.log2(k) * 0.6);
       const svgCountryFontSize = (baseCountryPx / k).toFixed(2) + "px";
@@ -867,7 +898,6 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       const svgMicroFontSize = (9.5 / k).toFixed(2) + "px";
       const svgDepFontSize = (8.5 / k).toFixed(2) + "px";
 
-      // Micronation pins: visible ONLY when zoomed in (k >= 2.2)
       micronationLayer.style("display", k >= 2.2 ? "block" : "none");
       if (k >= 2.2) {{
         micronationLayer.selectAll("circle.micronation-pin")
@@ -875,19 +905,15 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
           .style("stroke-width", (1.5 / k) + "px");
       }}
 
-      // Dotted borders stroke scaling
-      dottedBordersLayer.selectAll(".dotted-disputed")
-        .style("stroke-width", (1.0 / k) + "px");
+      dashedBordersLayer.selectAll(".dashed-disputed")
+        .style("stroke-width", (1.1 / k) + "px");
 
-      // Ocean labels
       const svgOceanFontSize = (12.0 / Math.sqrt(k)).toFixed(2) + "px";
       oceanLabelsLayer.selectAll(".ocean-label")
         .style("font-size", svgOceanFontSize);
 
-      // Collision Boxes in Screen Space
       const placedBoxes = [];
 
-      // Sort order: Sovereign nations first, dependencies last
       const labels = labelLayer.selectAll("text").nodes();
       labels.sort((a, b) => {{
         const aDep = a.getAttribute("data-dep") === "true";
@@ -907,7 +933,6 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
         const isDep = el.attr("data-dep") === "true";
         const name = el.attr("data-name");
 
-        // Micronations only show at zoom >= 2.2
         if (isMicro) {{
           if (k < 2.2) {{
             el.style("display", "none");
@@ -919,7 +944,6 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
           return;
         }}
 
-        // Dependencies: NEVER displace sovereign countries when zoomed out (k < 2.5)
         if (isDep) {{
           if (k < 2.5) {{
             el.style("display", "none");
@@ -928,7 +952,6 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
           el.style("font-size", svgDepFontSize)
             .style("stroke-width", (2.0 / k) + "px");
         }} else {{
-          // Bold sovereign country label
           el.style("font-size", svgCountryFontSize)
             .style("stroke-width", svgCountryStroke);
         }}
@@ -969,7 +992,6 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       }});
     }}
 
-    // Tooltip and interactions
     const tooltip = document.getElementById("tooltip");
     function handleMouseEnter(event, d) {{
       const p = d.properties;
@@ -992,6 +1014,9 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
 
     function handleCountryClick(event, d) {{
       const p = d.properties;
+      highlightedCountry = p.name;
+      document.getElementById("country-search").value = p.name;
+      renderGeometry();
       window.open(p.wiki, "_blank");
       showInfoCard(p);
     }}
@@ -1015,12 +1040,12 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       document.getElementById("info-panel").style.display = "none";
     }});
 
-    // Center on Country or Ocean
     function centerOnTarget(targetName) {{
       const query = targetName.trim().toLowerCase();
 
       const ocean = WORLD_DATA.oceans.find(o => o.name.toLowerCase() === query);
       if (ocean) {{
+        highlightedCountry = null;
         const [lon, lat] = ocean.centroid;
         currentLon = Math.round(lon);
         currentLat = Math.round(lat);
@@ -1031,6 +1056,7 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
 
       const target = WORLD_DATA.features.find(f => f.properties.name.toLowerCase() === query);
       if (target) {{
+        highlightedCountry = target.properties.name;
         const [lon, lat] = target.properties.centroid;
         currentLon = Math.round(lon);
         currentLat = Math.round(lat);
@@ -1087,28 +1113,126 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       updateLabelStylesAndVisibility(currentZoomK);
     }});
 
+    // RESET BUTTON: Clear highlighted country, return to 0 lon, 0 lat, NO country highlighted!
     document.getElementById("reset-btn").addEventListener("click", () => {{
-      currentLon = INITIAL_LON;
-      currentLat = INITIAL_LAT;
+      highlightedCountry = null; // No country highlighted!
+      currentLon = 0.0;
+      currentLat = 0.0;
       currentZoomK = 1.0;
       syncControls();
       document.getElementById("country-search").value = "";
+      document.getElementById("info-panel").style.display = "none";
       updateProjection();
       svg.transition().duration(350).call(zoom.transform, d3.zoomIdentity);
     }});
 
-    document.getElementById("export-svg-btn").addEventListener("click", () => {{
+    // --- HIGH QUALITY EXPORT FUNCTIONS ---
+
+    // 1. Standalone Clean SVG String Generator (embedded styles & background rect)
+    function generateCleanSvgString() {{
       const svgEl = document.getElementById("map-svg");
+      const clone = svgEl.cloneNode(true);
+      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      clone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+
+      // Insert explicit background rectangle at top of SVG so it never renders black/transparent
+      const bgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      bgRect.setAttribute("width", "100%");
+      bgRect.setAttribute("height", "100%");
+      bgRect.setAttribute("fill", "#d8ecf8");
+      clone.insertBefore(bgRect, clone.firstChild);
+
+      // Embedded full standalone stylesheet inside SVG
+      const styleEl = document.createElementNS("http://www.w3.org/2000/svg", "style");
+      styleEl.textContent = `
+        .ocean-sphere {{ fill: #d8ecf8; stroke: #94a3b8; stroke-width: 0.8px; }}
+        .graticule {{ fill: none; stroke: #c8deec; stroke-width: 0.5px; stroke-dasharray: 2, 3; }}
+        .country {{ fill: #ffffff; stroke: #94a3b8; stroke-width: 0.55px; }}
+        .country.highlighted {{ fill: #fef3c7 !important; stroke: #d97706 !important; stroke-width: 1.4px !important; }}
+        .dashed-disputed {{ fill: none; stroke: #718096; stroke-width: 1.1px; stroke-dasharray: 3.5, 3.0; stroke-linecap: round; }}
+        .micronation-pin {{ fill: #e11d48; stroke: #ffffff; stroke-width: 1.5px; }}
+        .country-label {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 11px; font-weight: 700; fill: #0f172a; stroke: #ffffff; stroke-width: 2.8px; paint-order: stroke fill; text-anchor: middle; }}
+        .ocean-label {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 11.5px; font-style: italic; font-weight: 700; letter-spacing: 3.5px; fill: #3f7893; text-anchor: middle; }}
+      `;
+      clone.insertBefore(styleEl, clone.firstChild);
+
       const serializer = new XMLSerializer();
-      let source = serializer.serializeToString(svgEl);
-      source = '<?xml version="1.0" standalone="no"?>\\r\\n' + source;
-      const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
-      const downloadLink = document.createElement("a");
-      downloadLink.href = url;
-      downloadLink.download = `equal_earth_lon${{currentLon}}_lat${{currentLat}}.svg`;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
+      return '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\\n' + serializer.serializeToString(clone);
+    }}
+
+    // Export SVG
+    document.getElementById("export-svg-btn").addEventListener("click", () => {{
+      const svgString = generateCleanSvgString();
+      const blob = new Blob([svgString], {{ type: "image/svg+xml;charset=utf-8" }});
+      const url = URL.createObjectURL(blob);
+      const dl = document.createElement("a");
+      dl.href = url;
+      dl.download = `equal_earth_lon${{currentLon}}_lat${{currentLat}}.svg`;
+      document.body.appendChild(dl);
+      dl.click();
+      document.body.removeChild(dl);
+      URL.revokeObjectURL(url);
+    }});
+
+    // Helper: Rasterize SVG to high-res HTML5 Canvas
+    function rasterizeToCanvas(callback, scale = 2.0) {{
+      const svgString = generateCleanSvgString();
+      const blob = new Blob([svgString], {{ type: "image/svg+xml;charset=utf-8" }});
+      const url = URL.createObjectURL(blob);
+
+      const img = new Image();
+      img.onload = () => {{
+        const canvas = document.createElement("canvas");
+        canvas.width = width * scale;
+        canvas.height = height * scale;
+        const ctx = canvas.getContext("2d");
+
+        // Background
+        ctx.fillStyle = "#d8ecf8";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw image scaled
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        callback(canvas);
+      }};
+      img.src = url;
+    }}
+
+    // Export High-Quality JPEG
+    document.getElementById("export-jpg-btn").addEventListener("click", () => {{
+      rasterizeToCanvas((canvas) => {{
+        canvas.toBlob((blob) => {{
+          const url = URL.createObjectURL(blob);
+          const dl = document.createElement("a");
+          dl.href = url;
+          dl.download = `equal_earth_lon${{currentLon}}_lat${{currentLat}}.jpg`;
+          document.body.appendChild(dl);
+          dl.click();
+          document.body.removeChild(dl);
+          URL.revokeObjectURL(url);
+        }}, "image/jpeg", 0.95);
+      }}, 2.0);
+    }});
+
+    // Export PDF
+    document.getElementById("export-pdf-btn").addEventListener("click", () => {{
+      rasterizeToCanvas((canvas) => {{
+        if (window.jspdf && window.jspdf.jsPDF) {{
+          const {{ jsPDF }} = window.jspdf;
+          const pdf = new jsPDF({{
+            orientation: "landscape",
+            unit: "pt",
+            format: [width, height]
+          }});
+          const imgData = canvas.toDataURL("image/jpeg", 0.95);
+          pdf.addImage(imgData, "JPEG", 0, 0, width, height);
+          pdf.save(`equal_earth_lon${{currentLon}}_lat${{currentLat}}.pdf`);
+        }} else {{
+          // Fallback to direct print/PDF
+          window.print();
+        }}
+      }}, 2.0);
     }});
 
     // Initial Start
@@ -1133,6 +1257,10 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
     with open(HTML_OUTPUT, "w", encoding="utf-8") as f:
         f.write(html_content)
 
+    # Also sync root index.html for GitHub Pages
+    with open(ROOT_INDEX, "w", encoding="utf-8") as f:
+        f.write(html_content)
+
     print(f"\n[+] Interactive Equal Earth web map generated: {HTML_OUTPUT}")
     return HTML_OUTPUT
 
@@ -1152,15 +1280,17 @@ def generate_static_png(lon, lat, target_name, output_path=None):
         ax = plt.axes(projection=ccrs.EqualEarth(central_longitude=lon))
         ax.set_facecolor("#d8ecf8")
 
-        # 1. Countries
+        # 1. Countries (Highlight ONLY target country if specified)
         for feat in world_data["features"]:
             geom = shape(feat["geometry"])
             name = feat["properties"]["name"]
 
-            if name == "India":
+            is_target = (target_name and target_name != "World" and name.lower() == target_name.lower())
+
+            if is_target:
                 face = "#fef3c7"
                 edge = "#d97706"
-                lw = 1.2
+                lw = 1.3
             else:
                 face = "#ffffff"
                 edge = "#94a3b8"
@@ -1168,11 +1298,11 @@ def generate_static_png(lon, lat, target_name, output_path=None):
 
             ax.add_geometries([geom], crs=ccrs.PlateCarree(), facecolor=face, edgecolor=edge, linewidth=lw)
 
-        # 2. Dotted Disputed Borders (Much lighter than recognised borders)
+        # 2. Light Dashed Disputed Borders (Kosovo/Serbia, Morocco/SADR, Bir Tawil)
         for db in world_data.get("dashed_borders", []):
             geom = shape(db["geometry"])
             ax.add_geometries([geom], crs=ccrs.PlateCarree(), facecolor="none",
-                              edgecolor="#b0bec5", linewidth=0.9, linestyle=":", alpha=0.9)
+                              edgecolor="#718096", linewidth=1.0, linestyle="--", alpha=0.9)
 
         # 3. Ocean Labels
         for ocean in world_data.get("oceans", []):
@@ -1181,7 +1311,7 @@ def generate_static_png(lon, lat, target_name, output_path=None):
                     fontsize=8.5, fontstyle="italic", color="#3f7893", ha="center", va="center",
                     fontweight="bold")
 
-        # 4. BOLD Country Labels (Google Maps style)
+        # 4. BOLD Country Labels
         major_countries = {
             "India", "China", "United States", "Brazil", "Russia", "Canada", "Australia",
             "Argentina", "Algeria", "DR Congo", "Saudi Arabia", "Mexico", "Indonesia",
@@ -1276,8 +1406,8 @@ def main():
                 target_name = "India"
                 lon, lat = entity["properties"]["centroid"]
         elif choice == "2":
-            lon_in = input("Enter central longitude [-180 to 180] (default 78.96): ").strip() or "78.96"
-            lat_in = input("Enter central latitude [-90 to 90] (default 20.59): ").strip() or "20.59"
+            lon_in = input("Enter central longitude [-180 to 180] (default 0.0): ").strip() or "0.0"
+            lat_in = input("Enter central latitude [-90 to 90] (default 0.0): ").strip() or "0.0"
             lon = float(lon_in)
             lat = float(lat_in)
             target_name = f"Custom ({lon:.1f}°, {lat:.1f}°)"
