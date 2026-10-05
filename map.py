@@ -328,6 +328,20 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       stroke-dasharray: 2, 3;
     }}
 
+    /* Graticule Edge Labels (60°N, 30°N, 0°, 30°S, 60°S & Longitudes) */
+    .graticule-label {{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 8.5px;
+      font-weight: 600;
+      fill: #64748b;
+      stroke: #ffffff;
+      stroke-width: 2.2px;
+      stroke-linejoin: round;
+      paint-order: stroke fill;
+      pointer-events: none;
+      dominant-baseline: central;
+    }}
+
     .country {{
       fill: #ffffff;
       stroke: #94a3b8;
@@ -656,6 +670,7 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
     // Layer Structure
     const oceanLayer = g.append("path").attr("class", "ocean-sphere");
     const graticuleLayer = g.append("g");
+    const graticuleLabelsLayer = g.append("g");
     const countryLayer = g.append("g");
     const dashedBordersLayer = g.append("g");
     const oceanLabelsLayer = g.append("g");
@@ -780,7 +795,7 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
           .attr("d", pathGenerator)
       );
 
-      // Light Dashed Disputed Borders
+      // Dashed Disputed Borders
       dashedBordersLayer.selectAll("*").remove();
       if (WORLD_DATA.dashed_borders) {{
         WORLD_DATA.dashed_borders.forEach(db => {{
@@ -791,6 +806,9 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
         }});
       }}
 
+      // Graticule Edge Labels (60°N, 30°N, 0°, 30°S, 60°S & Longitudes)
+      renderGraticuleLabels();
+
       // Ocean Labels
       renderOceanLabels();
 
@@ -800,6 +818,58 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       // Country Labels
       renderCountryLabels();
       updateLabelStylesAndVisibility(currentZoomK);
+    }}
+
+    function renderGraticuleLabels() {{
+      graticuleLabelsLayer.selectAll("*").remove();
+
+      // 1. Latitude Edge Labels (60°N, 30°N, 0°, 30°S, 60°S)
+      const latitudes = [-60, -30, 0, 30, 60];
+      latitudes.forEach(lat => {{
+        const latLabel = lat === 0 ? "0°" : (lat > 0 ? `${{lat}}°N` : `${{Math.abs(lat)}}°S`);
+
+        // Left Edge
+        const ptLeft = projection([currentLon - 180, lat]);
+        if (ptLeft && !isNaN(ptLeft[0]) && !isNaN(ptLeft[1])) {{
+          graticuleLabelsLayer.append("text")
+            .attr("class", "graticule-label")
+            .attr("x", ptLeft[0] - 8)
+            .attr("y", ptLeft[1])
+            .attr("text-anchor", "end")
+            .text(latLabel);
+        }}
+
+        // Right Edge
+        const ptRight = projection([currentLon + 180, lat]);
+        if (ptRight && !isNaN(ptRight[0]) && !isNaN(ptRight[1])) {{
+          graticuleLabelsLayer.append("text")
+            .attr("class", "graticule-label")
+            .attr("x", ptRight[0] + 8)
+            .attr("y", ptRight[1])
+            .attr("text-anchor", "start")
+            .text(latLabel);
+        }}
+      }});
+
+      // 2. Longitude Edge Labels along Bottom (-120°, -60°, 0°, 60°, 120°)
+      const lonOffsets = [-120, -60, 0, 60, 120];
+      lonOffsets.forEach(offset => {{
+        let rawLon = currentLon + offset;
+        while (rawLon > 180) rawLon -= 360;
+        while (rawLon < -180) rawLon += 360;
+
+        let lonLabel = rawLon === 0 ? "0°" : (Math.abs(rawLon) === 180 ? "180°" : (rawLon > 0 ? `${{Math.round(rawLon)}}°E` : `${{Math.round(Math.abs(rawLon))}}°W`));
+
+        const ptBottom = projection([currentLon + offset, -86]);
+        if (ptBottom && !isNaN(ptBottom[0]) && !isNaN(ptBottom[1])) {{
+          graticuleLabelsLayer.append("text")
+            .attr("class", "graticule-label")
+            .attr("x", ptBottom[0])
+            .attr("y", ptBottom[1] + 12)
+            .attr("text-anchor", "middle")
+            .text(lonLabel);
+        }}
+      }});
     }}
 
     function renderOceanLabels() {{
@@ -907,6 +977,11 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
 
       dashedBordersLayer.selectAll(".dashed-disputed")
         .style("stroke-width", (1.1 / k) + "px");
+
+      const svgGraticuleFontSize = (8.5 / k).toFixed(2) + "px";
+      graticuleLabelsLayer.selectAll(".graticule-label")
+        .style("font-size", svgGraticuleFontSize)
+        .style("stroke-width", (2.0 / k) + "px");
 
       const svgOceanFontSize = (12.0 / Math.sqrt(k)).toFixed(2) + "px";
       oceanLabelsLayer.selectAll(".ocean-label")
@@ -1147,6 +1222,7 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       styleEl.textContent = `
         .ocean-sphere {{ fill: #d8ecf8; stroke: #94a3b8; stroke-width: 0.8px; }}
         .graticule {{ fill: none; stroke: #c8deec; stroke-width: 0.5px; stroke-dasharray: 2, 3; }}
+        .graticule-label {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 8.5px; font-weight: 600; fill: #64748b; stroke: #ffffff; stroke-width: 2.2px; stroke-linejoin: round; paint-order: stroke fill; dominant-baseline: central; }}
         .country {{ fill: #ffffff; stroke: #94a3b8; stroke-width: 0.55px; }}
         .country.highlighted {{ fill: #fef3c7 !important; stroke: #d97706 !important; stroke-width: 1.4px !important; }}
         .dashed-disputed {{ fill: none; stroke: #718096; stroke-width: 1.1px; stroke-dasharray: 3.5, 3.0; stroke-linecap: round; }}
