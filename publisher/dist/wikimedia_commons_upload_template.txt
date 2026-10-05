@@ -1,0 +1,18 @@
+== {{int:filedesc}} ==
+{{Information
+|description    = {{en|1=Equal Earth projection world map centered on India (78°E) featuring the 100% official international sovereign boundary of India as recognized and published by the Survey of India (Department of Science and Technology, Government of India), including the complete Union Territories of Jammu & Kashmir and Ladakh (including PoK and Aksai Chin) and the state of Arunachal Pradesh.}}
+|date           = 2026
+|source         = {{own}}, using official Survey of India sovereign boundary vector shapefiles and Natural Earth datasets.
+|author         = Sarvagya Chaturvedi
+|permission     = {{CC-BY-4.0}}
+|other_versions = Available in SVG, PDF, and high-resolution PNG on GitHub Pages.
+}}
+
+== {{int:license-header}} ==
+{{CC-BY-4.0}}
+{{Survey of India}}
+
+[[Category:Equal Earth projection]]
+[[Category:Maps of the world with Survey of India boundaries]]
+[[Category:Maps of India with official borders]]
+[[Category:SVG maps of the world]]
