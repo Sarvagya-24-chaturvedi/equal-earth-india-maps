@@ -683,9 +683,14 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
     let currentMode = INITIAL_MODE;
     let currentZoomK = 1.0;
     let showLabels = true;
+    let isInitialLoad = true;
     
-    // Highlight state: null by default (no country highlighted unless searched)
-    let highlightedCountry = (INITIAL_TARGET && INITIAL_TARGET !== "World") ? INITIAL_TARGET : null;
+    // Highlight state: ONLY active if a valid country was specifically targeted
+    const initialCountryObj = (INITIAL_TARGET && INITIAL_TARGET !== "World" && !INITIAL_TARGET.startsWith("Custom"))
+      ? WORLD_DATA.features.find(f => f.properties.name.toLowerCase() === INITIAL_TARGET.trim().toLowerCase())
+      : null;
+
+    let highlightedCountry = initialCountryObj ? initialCountryObj.properties.name : null;
 
     const zoom = d3.zoom()
       .scaleExtent([0.8, 16])
@@ -721,6 +726,7 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
 
     function updateProjection() {{
       const scale = Math.min(width / 5.6, height / 2.9);
+      let targetTransform = d3.zoomIdentity;
 
       if (currentMode === "natural") {{
         projection
@@ -730,13 +736,8 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
           .translate([width / 2, height / 2]);
 
         const centerPt = projection([currentLon, currentLat]);
-        if (centerPt) {{
-          const dy = (height / 2) - centerPt[1];
-          svg.transition().duration(350).call(
-            zoom.transform,
-            d3.zoomIdentity.translate(0, dy).scale(currentZoomK)
-          );
-        }}
+        const dy = centerPt ? ((height / 2) - centerPt[1]) : 0;
+        targetTransform = d3.zoomIdentity.translate(0, dy).scale(currentZoomK);
       }} else {{
         projection
           .scale(scale)
@@ -744,10 +745,14 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
           .center([0, 0])
           .translate([width / 2, height / 2]);
 
-        svg.transition().duration(350).call(
-          zoom.transform,
-          d3.zoomIdentity.scale(currentZoomK)
-        );
+        targetTransform = d3.zoomIdentity.scale(currentZoomK);
+      }}
+
+      if (isInitialLoad) {{
+        svg.call(zoom.transform, targetTransform);
+        isInitialLoad = false;
+      }} else {{
+        svg.transition().duration(350).call(zoom.transform, targetTransform);
       }}
 
       renderGeometry();
@@ -823,12 +828,12 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
     function renderGraticuleLabels() {{
       graticuleLabelsLayer.selectAll("*").remove();
 
-      // 1. Latitude Edge Labels (60°N, 30°N, 0°, 30°S, 60°S)
+      // 1. Latitude Edge Labels along Left and Right Sides (-60°, -30°, 0°, 30°, 60°)
       const latitudes = [-60, -30, 0, 30, 60];
       latitudes.forEach(lat => {{
         const latLabel = lat === 0 ? "0°" : (lat > 0 ? `${{lat}}°N` : `${{Math.abs(lat)}}°S`);
 
-        // Left Edge
+        // Left Side
         const ptLeft = projection([currentLon - 180, lat]);
         if (ptLeft && !isNaN(ptLeft[0]) && !isNaN(ptLeft[1])) {{
           graticuleLabelsLayer.append("text")
@@ -839,7 +844,7 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
             .text(latLabel);
         }}
 
-        // Right Edge
+        // Right Side
         const ptRight = projection([currentLon + 180, lat]);
         if (ptRight && !isNaN(ptRight[0]) && !isNaN(ptRight[1])) {{
           graticuleLabelsLayer.append("text")
@@ -851,7 +856,7 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
         }}
       }});
 
-      // 2. Longitude Edge Labels along Bottom (-120°, -60°, 0°, 60°, 120°)
+      // 2. Longitude Edge Labels along Top and Bottom (-120°, -60°, 0°, 60°, 120°)
       const lonOffsets = [-120, -60, 0, 60, 120];
       lonOffsets.forEach(offset => {{
         let rawLon = currentLon + offset;
@@ -860,12 +865,24 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
 
         let lonLabel = rawLon === 0 ? "0°" : (Math.abs(rawLon) === 180 ? "180°" : (rawLon > 0 ? `${{Math.round(rawLon)}}°E` : `${{Math.round(Math.abs(rawLon))}}°W`));
 
-        const ptBottom = projection([currentLon + offset, -86]);
+        // Top Edge
+        const ptTop = projection([currentLon + offset, 86.5]);
+        if (ptTop && !isNaN(ptTop[0]) && !isNaN(ptTop[1])) {{
+          graticuleLabelsLayer.append("text")
+            .attr("class", "graticule-label")
+            .attr("x", ptTop[0])
+            .attr("y", ptTop[1] - 8)
+            .attr("text-anchor", "middle")
+            .text(lonLabel);
+        }}
+
+        // Bottom Edge
+        const ptBottom = projection([currentLon + offset, -86.5]);
         if (ptBottom && !isNaN(ptBottom[0]) && !isNaN(ptBottom[1])) {{
           graticuleLabelsLayer.append("text")
             .attr("class", "graticule-label")
             .attr("x", ptBottom[0])
-            .attr("y", ptBottom[1] + 12)
+            .attr("y", ptBottom[1] + 13)
             .attr("text-anchor", "middle")
             .text(lonLabel);
         }}
@@ -961,18 +978,22 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
     }}
 
     function updateLabelStylesAndVisibility(k) {{
-      const baseCountryPx = Math.max(9.0, 11.5 - Math.log2(k) * 0.6);
-      const svgCountryFontSize = (baseCountryPx / k).toFixed(2) + "px";
-      const svgCountryStroke = (2.6 / k).toFixed(2) + "px";
+      // Smoothly adjust screen font size: 10.5px at k=1, scaling down gracefully to 7.8px when zoomed in
+      const screenCountryPx = Math.max(7.8, 10.5 - Math.log2(Math.max(1, k)) * 0.7);
+      const svgCountryFontSize = (screenCountryPx / k).toFixed(2) + "px";
+      const svgCountryStroke = (2.2 / k).toFixed(2) + "px";
 
-      const svgMicroFontSize = (9.5 / k).toFixed(2) + "px";
-      const svgDepFontSize = (8.5 / k).toFixed(2) + "px";
+      const screenMicroPx = Math.max(7.2, 9.0 - Math.log2(Math.max(1, k)) * 0.5);
+      const svgMicroFontSize = (screenMicroPx / k).toFixed(2) + "px";
 
-      micronationLayer.style("display", k >= 2.2 ? "block" : "none");
-      if (k >= 2.2) {{
+      const screenDepPx = Math.max(7.4, 8.5 - Math.log2(Math.max(1, k)) * 0.5);
+      const svgDepFontSize = (screenDepPx / k).toFixed(2) + "px";
+
+      micronationLayer.style("display", k >= 2.6 ? "block" : "none");
+      if (k >= 2.6) {{
         micronationLayer.selectAll("circle.micronation-pin")
-          .attr("r", Math.max(2.5, 4.5 / Math.sqrt(k)))
-          .style("stroke-width", (1.5 / k) + "px");
+          .attr("r", Math.max(2.4, 4.2 / Math.sqrt(k)))
+          .style("stroke-width", (1.4 / k) + "px");
       }}
 
       dashedBordersLayer.selectAll(".dashed-disputed")
@@ -988,44 +1009,62 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
         .style("font-size", svgOceanFontSize);
 
       const placedBoxes = [];
-
       const labels = labelLayer.selectAll("text").nodes();
+
+      // Strict Priority Ordering:
+      // 1. Highlighted country always first
+      // 2. Priority sovereigns in ranked order
+      // 3. Other sovereign countries
+      // 4. Dependencies
+      // 5. Micronations
       labels.sort((a, b) => {{
-        const aDep = a.getAttribute("data-dep") === "true";
-        const bDep = b.getAttribute("data-dep") === "true";
+        const nameA = a.getAttribute("data-name");
+        const nameB = b.getAttribute("data-name");
+        if (nameA === highlightedCountry) return -1;
+        if (nameB === highlightedCountry) return 1;
+
         const aMicro = a.getAttribute("data-micro") === "true";
         const bMicro = b.getAttribute("data-micro") === "true";
         if (aMicro && !bMicro) return 1;
         if (!aMicro && bMicro) return -1;
+
+        const aDep = a.getAttribute("data-dep") === "true";
+        const bDep = b.getAttribute("data-dep") === "true";
         if (aDep && !bDep) return 1;
         if (!aDep && bDep) return -1;
+
+        const idxA = prioritySovereigns.indexOf(nameA);
+        const idxB = prioritySovereigns.indexOf(nameB);
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+
         return 0;
       }});
+
+      const transform = d3.zoomTransform(svg.node());
 
       labels.forEach(node => {{
         const el = d3.select(node);
         const isMicro = el.attr("data-micro") === "true";
         const isDep = el.attr("data-dep") === "true";
         const name = el.attr("data-name");
+        const isHighlighted = (name === highlightedCountry);
 
         if (isMicro) {{
+          if (k < 2.6) {{
+            el.style("display", "none");
+            return;
+          }}
+          el.style("font-size", svgMicroFontSize)
+            .style("stroke-width", (1.8 / k) + "px");
+        }} else if (isDep) {{
           if (k < 2.2) {{
             el.style("display", "none");
             return;
           }}
-          el.style("display", "block")
-            .style("font-size", svgMicroFontSize)
-            .style("stroke-width", (2.2 / k) + "px");
-          return;
-        }}
-
-        if (isDep) {{
-          if (k < 2.5) {{
-            el.style("display", "none");
-            return;
-          }}
           el.style("font-size", svgDepFontSize)
-            .style("stroke-width", (2.0 / k) + "px");
+            .style("stroke-width", (1.8 / k) + "px");
         }} else {{
           el.style("font-size", svgCountryFontSize)
             .style("stroke-width", svgCountryStroke);
@@ -1034,21 +1073,34 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
         const origX = parseFloat(el.attr("data-orig-x"));
         const origY = parseFloat(el.attr("data-orig-y"));
         
-        const screenX = origX * k + (d3.zoomTransform(svg.node()).x);
-        const screenY = origY * k + (d3.zoomTransform(svg.node()).y);
+        const screenX = origX * transform.k + transform.x;
+        const screenY = origY * transform.k + transform.y;
 
+        // Cull offscreen labels
+        if (screenX < -80 || screenX > width + 80 || screenY < -40 || screenY > height + 40) {{
+          el.style("display", "none");
+          return;
+        }}
+
+        const fontPx = isMicro ? screenMicroPx : (isDep ? screenDepPx : screenCountryPx);
         const textLen = name.length;
-        const boxW = textLen * baseCountryPx * 0.58;
-        const boxH = baseCountryPx * 1.35;
+        const boxW = textLen * fontPx * 0.58;
+        const boxH = fontPx * 1.30;
+        const padX = 6;
+        const padY = 4;
 
         const curBox = {{
-          x1: screenX - boxW / 2,
-          x2: screenX + boxW / 2,
-          y1: screenY - boxH / 2,
-          y2: screenY + boxH / 2
+          x1: screenX - boxW / 2 - padX,
+          x2: screenX + boxW / 2 + padX,
+          y1: screenY - boxH / 2 - padY,
+          y2: screenY + boxH / 2 + padY
         }};
 
-        const isProminent = prioritySovereigns.includes(name);
+        if (isHighlighted) {{
+          el.style("display", "block");
+          placedBoxes.push(curBox);
+          return;
+        }}
 
         let collides = false;
         for (let b of placedBoxes) {{
@@ -1058,7 +1110,7 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
           }}
         }}
 
-        if (!collides || isProminent) {{
+        if (!collides) {{
           el.style("display", "block");
           placedBoxes.push(curBox);
         }} else {{
@@ -1116,6 +1168,10 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
     }});
 
     function centerOnTarget(targetName) {{
+      if (!targetName) {{
+        updateProjection();
+        return;
+      }}
       const query = targetName.trim().toLowerCase();
 
       const ocean = WORLD_DATA.oceans.find(o => o.name.toLowerCase() === query);
@@ -1138,7 +1194,11 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
         syncControls();
         updateProjection();
         showInfoCard(target.properties);
+        return;
       }}
+
+      // If query does not match any ocean or feature, still ensure map is projected and rendered!
+      updateProjection();
     }}
 
     function syncControls() {{
@@ -1311,12 +1371,23 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       }}, 2.0);
     }});
 
-    // Initial Start
-    if (INITIAL_TARGET && INITIAL_TARGET !== "World") {{
-      document.getElementById("country-search").value = INITIAL_TARGET;
-      centerOnTarget(INITIAL_TARGET);
+    // Initial Start: ALWAYS render map immediately so it loads on initial site visit without requiring reset!
+    updateProjection();
+
+    if (initialCountryObj) {{
+      document.getElementById("country-search").value = initialCountryObj.properties.name;
+      centerOnTarget(initialCountryObj.properties.name);
     }} else {{
-      updateProjection();
+      const initialOceanObj = (INITIAL_TARGET && INITIAL_TARGET !== "World" && !INITIAL_TARGET.startsWith("Custom"))
+        ? WORLD_DATA.oceans.find(o => o.name.toLowerCase() === INITIAL_TARGET.trim().toLowerCase())
+        : null;
+
+      if (initialOceanObj) {{
+        document.getElementById("country-search").value = initialOceanObj.name;
+        centerOnTarget(initialOceanObj.name);
+      }} else {{
+        document.getElementById("country-search").value = "";
+      }}
     }}
 
     window.addEventListener("resize", () => {{
@@ -1407,8 +1478,10 @@ def generate_static_png(lon, lat, target_name, output_path=None):
                         bbox=dict(boxstyle="square,pad=0.12", facecolor="#ffffff", alpha=0.75, edgecolor="none"))
 
         gl = ax.gridlines(draw_labels=True, linewidth=0.5, color="#c8deec", alpha=0.8, linestyle="--")
-        gl.top_labels = False
-        gl.right_labels = False
+        gl.top_labels = True
+        gl.bottom_labels = True
+        gl.left_labels = True
+        gl.right_labels = True
         gl.xlabel_style = {"size": 8, "color": "#64748b"}
         gl.ylabel_style = {"size": 8, "color": "#64748b"}
 
