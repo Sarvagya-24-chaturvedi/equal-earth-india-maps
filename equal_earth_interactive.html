@@ -212,6 +212,10 @@
       justify-content: center;
       align-items: center;
       cursor: grab;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     #map-container:active {
@@ -222,6 +226,10 @@
       width: 100%;
       height: 100%;
       display: block;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .ocean-sphere {
@@ -439,6 +447,17 @@
       margin-top: 2px;
     }
 
+    .action-buttons-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .mobile-controls-toggle {
+      display: none;
+    }
+
     .quick-tips {
       position: absolute;
       bottom: 16px;
@@ -464,6 +483,131 @@
       height: 0;
       border-top: 2px dashed #718096;
     }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+      .top-bar {
+        top: 8px;
+        left: 8px;
+        right: 8px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+      }
+
+      .header-card {
+        padding: 7px 12px;
+        justify-content: space-between;
+        width: 100%;
+      }
+
+      .title-area h1 {
+        font-size: 13px;
+        gap: 6px;
+      }
+
+      .title-area p {
+        display: none;
+      }
+
+      .badge-soi {
+        font-size: 9px;
+        padding: 1px 6px;
+      }
+
+      .mobile-controls-toggle {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 10px;
+        font-size: 11.5px;
+        font-weight: 700;
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        cursor: pointer;
+        color: var(--text-main);
+      }
+
+      .controls-strip {
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 9px;
+        width: 100%;
+        padding: 12px;
+        max-height: 80vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .controls-strip.open {
+        display: flex !important;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
+      }
+
+      .controls-strip .ctrl-group {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        align-items: center;
+      }
+
+      .controls-strip .ctrl-group input[type="range"] {
+        flex: 1;
+        margin: 0 8px;
+        width: auto;
+      }
+
+      .controls-strip select,
+      .controls-strip input[type="text"] {
+        width: 100% !important;
+        font-size: 13px;
+      }
+
+      .action-buttons-wrap {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        width: 100%;
+        margin-top: 4px;
+      }
+
+      .action-buttons-wrap #export-svg-btn {
+        grid-column: span 2;
+      }
+
+      .action-buttons-wrap .btn {
+        justify-content: center;
+        padding: 7px 10px;
+        font-size: 11.5px;
+      }
+
+      .quick-tips {
+        bottom: 8px;
+        left: 8px;
+        right: 8px;
+        padding: 5px 10px;
+        font-size: 9.5px;
+        gap: 10px;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .quick-tips::-webkit-scrollbar {
+        display: none;
+      }
+
+      .info-panel {
+        bottom: 8px;
+        left: 8px;
+        right: 8px;
+        width: auto;
+        max-width: calc(100vw - 16px);
+        padding: 12px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -478,9 +622,13 @@
         </h1>
         <p>Google Maps format · Bold names · Light dashed disputed borders</p>
       </div>
+      <button id="mobile-toggle-btn" class="mobile-controls-toggle" aria-label="Toggle Controls">
+        <span>⚙️ Controls</span>
+        <span id="toggle-chevron">▾</span>
+      </button>
     </div>
 
-    <div class="card controls-strip">
+    <div class="card controls-strip" id="controls-strip">
       <div class="ctrl-group">
         <label for="country-search">Search:</label>
         <input type="text" id="country-search" list="target-list" placeholder="Search country, ocean..." style="width: 180px;">
@@ -507,13 +655,13 @@
         </select>
       </div>
 
-      <button id="toggle-labels" class="btn">Labels: ON</button>
-      <button id="reset-btn" class="btn">Reset</button>
-
-      <!-- Download Options -->
-      <button id="export-jpg-btn" class="btn btn-primary">Download JPEG</button>
-      <button id="export-pdf-btn" class="btn btn-success">Download PDF</button>
-      <button id="export-svg-btn" class="btn">Download SVG</button>
+      <div class="action-buttons-wrap">
+        <button id="toggle-labels" class="btn">Labels: ON</button>
+        <button id="reset-btn" class="btn">Reset</button>
+        <button id="export-jpg-btn" class="btn btn-primary">Download JPEG</button>
+        <button id="export-pdf-btn" class="btn btn-success">Download PDF</button>
+        <button id="export-svg-btn" class="btn">Download SVG</button>
+      </div>
     </div>
   </div>
 
@@ -887,33 +1035,49 @@
     }
 
     function updateLabelStylesAndVisibility(k) {
-      // Smoothly adjust screen font size: 10.5px at k=1, scaling down gracefully to 7.8px when zoomed in
-      const screenCountryPx = Math.max(7.8, 10.5 - Math.log2(Math.max(1, k)) * 0.7);
-      const svgCountryFontSize = (screenCountryPx / k).toFixed(2) + "px";
-      const svgCountryStroke = (2.2 / k).toFixed(2) + "px";
+      const isMobile = window.innerWidth <= 768;
 
-      const screenMicroPx = Math.max(7.2, 9.0 - Math.log2(Math.max(1, k)) * 0.5);
+      // Base sizes on screen (in CSS pixels)
+      // When zoomed in, font must REMAIN PROMINENT AND READABLE on mobile and desktop, NEVER microscopic!
+      const baseProminentPx = isMobile ? 15.0 : 13.5;
+      const baseStandardPx = isMobile ? 12.5 : 11.2;
+      const baseDepPx = isMobile ? 11.0 : 9.8;
+      const baseMicroPx = isMobile ? 10.5 : 9.5;
+
+      // Zoom enhancement: as user zooms in, slightly enhance the font size (up to +2.2px) so countries like India remain bold and easy to read
+      const zoomBoost = Math.min(2.2, Math.log2(Math.max(1, k)) * 0.55);
+
+      const screenProminentPx = baseProminentPx + zoomBoost;
+      const screenStandardPx = baseStandardPx + (zoomBoost * 0.4);
+      const screenDepPx = baseDepPx + (zoomBoost * 0.3);
+      const screenMicroPx = baseMicroPx + (zoomBoost * 0.3);
+
+      const svgProminentFontSize = (screenProminentPx / k).toFixed(2) + "px";
+      const svgCountryFontSize = (screenStandardPx / k).toFixed(2) + "px";
+      const svgDepFontSize = (screenDepPx / k).toFixed(2) + "px";
       const svgMicroFontSize = (screenMicroPx / k).toFixed(2) + "px";
 
-      const screenDepPx = Math.max(7.4, 8.5 - Math.log2(Math.max(1, k)) * 0.5);
-      const svgDepFontSize = (screenDepPx / k).toFixed(2) + "px";
+      const svgHaloStroke = ((isMobile ? 3.0 : 2.5) / k).toFixed(2) + "px";
 
-      micronationLayer.style("display", k >= 2.6 ? "block" : "none");
-      if (k >= 2.6) {
+      // Micronation pins: clamp radius to 4px on screen, NOT giant blobs!
+      micronationLayer.style("display", k >= 2.4 ? "block" : "none");
+      if (k >= 2.4) {
+        const pinScreenR = isMobile ? 4.2 : 3.8;
         micronationLayer.selectAll("circle.micronation-pin")
-          .attr("r", Math.max(2.4, 4.2 / Math.sqrt(k)))
-          .style("stroke-width", (1.4 / k) + "px");
+          .attr("r", (pinScreenR / k))
+          .style("stroke-width", (1.2 / k) + "px");
       }
 
       dashedBordersLayer.selectAll(".dashed-disputed")
-        .style("stroke-width", (1.1 / k) + "px");
+        .style("stroke-width", (1.2 / k) + "px");
 
-      const svgGraticuleFontSize = (8.5 / k).toFixed(2) + "px";
+      const svgGraticuleFontSize = ((isMobile ? 9.5 : 8.5) / k).toFixed(2) + "px";
       graticuleLabelsLayer.selectAll(".graticule-label")
         .style("font-size", svgGraticuleFontSize)
         .style("stroke-width", (2.0 / k) + "px");
 
-      const svgOceanFontSize = (12.0 / Math.sqrt(k)).toFixed(2) + "px";
+      const oceanScreenPx = isMobile ? 13.0 : 12.0;
+      const svgOceanFontSize = (oceanScreenPx / k).toFixed(2) + "px";
       oceanLabelsLayer.selectAll(".ocean-label")
         .style("font-size", svgOceanFontSize);
 
@@ -959,24 +1123,28 @@
         const isDep = el.attr("data-dep") === "true";
         const name = el.attr("data-name");
         const isHighlighted = (name === highlightedCountry);
+        const isProminent = prioritySovereigns.includes(name) || isHighlighted;
 
         if (isMicro) {
-          if (k < 2.6) {
+          if (k < 2.4) {
             el.style("display", "none");
             return;
           }
           el.style("font-size", svgMicroFontSize)
-            .style("stroke-width", (1.8 / k) + "px");
+            .style("stroke-width", svgHaloStroke);
         } else if (isDep) {
-          if (k < 2.2) {
+          if (k < 2.0) {
             el.style("display", "none");
             return;
           }
           el.style("font-size", svgDepFontSize)
-            .style("stroke-width", (1.8 / k) + "px");
+            .style("stroke-width", svgHaloStroke);
+        } else if (isProminent) {
+          el.style("font-size", svgProminentFontSize)
+            .style("stroke-width", svgHaloStroke);
         } else {
           el.style("font-size", svgCountryFontSize)
-            .style("stroke-width", svgCountryStroke);
+            .style("stroke-width", svgHaloStroke);
         }
 
         const origX = parseFloat(el.attr("data-orig-x"));
@@ -991,12 +1159,12 @@
           return;
         }
 
-        const fontPx = isMicro ? screenMicroPx : (isDep ? screenDepPx : screenCountryPx);
+        const fontPx = isMicro ? screenMicroPx : (isDep ? screenDepPx : (isProminent ? screenProminentPx : screenStandardPx));
         const textLen = name.length;
         const boxW = textLen * fontPx * 0.58;
         const boxH = fontPx * 1.30;
-        const padX = 6;
-        const padY = 4;
+        const padX = isMobile ? 8 : 6;
+        const padY = isMobile ? 5 : 4;
 
         const curBox = {
           x1: screenX - boxW / 2 - padX,
@@ -1030,6 +1198,7 @@
 
     const tooltip = document.getElementById("tooltip");
     function handleMouseEnter(event, d) {
+      if (!window.matchMedia("(hover: hover)").matches) return;
       const p = d.properties;
       tooltip.style.display = "block";
       tooltip.innerHTML = `
@@ -1156,6 +1325,18 @@
       renderCountryLabels();
       updateLabelStylesAndVisibility(currentZoomK);
     });
+
+    // Mobile controls toggle drawer
+    const mobileToggleBtn = document.getElementById("mobile-toggle-btn");
+    const controlsStrip = document.getElementById("controls-strip");
+    const toggleChevron = document.getElementById("toggle-chevron");
+
+    if (mobileToggleBtn) {
+      mobileToggleBtn.addEventListener("click", () => {
+        const isOpen = controlsStrip.classList.toggle("open");
+        toggleChevron.textContent = isOpen ? "▴" : "▾";
+      });
+    }
 
     // RESET BUTTON: Clear highlighted country, return to 0 lon, 0 lat, NO country highlighted!
     document.getElementById("reset-btn").addEventListener("click", () => {
