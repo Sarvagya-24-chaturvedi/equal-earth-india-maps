@@ -295,6 +295,42 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       border-color: #047857;
     }}
 
+    .btn-satellite {{
+      background: #0f172a;
+      border-color: #0284c7;
+      color: #38bdf8;
+      text-decoration: none;
+    }}
+
+    .btn-satellite:hover {{
+      background: #0284c7;
+      border-color: #0284c7;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(2, 132, 199, 0.4);
+    }}
+
+    .nav-satellite-btn {{
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 11px;
+      background: #0f172a;
+      border: 1px solid #0284c7;
+      border-radius: 6px;
+      color: #38bdf8;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }}
+
+    .nav-satellite-btn:hover {{
+      background: #0284c7;
+      color: #ffffff;
+      transform: translateY(-1px);
+    }}
+
     /* Map Display Viewport */
     #map-container {{
       width: 100vw;
@@ -713,10 +749,15 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
         </h1>
         <p>Google Maps format · Bold names · Light dashed disputed borders</p>
       </div>
-      <button id="mobile-toggle-btn" class="mobile-controls-toggle" aria-label="Toggle Controls">
-        <span>⚙️ Controls</span>
-        <span id="toggle-chevron">▾</span>
-      </button>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <a href="satellite_day_night.html" class="nav-satellite-btn" title="Switch to Topographic Satellite & Real-Time Day/Night View">
+          🛰️ Topographic & Live Day/Night ↗
+        </a>
+        <button id="mobile-toggle-btn" class="mobile-controls-toggle" aria-label="Toggle Controls">
+          <span>⚙️ Controls</span>
+          <span id="toggle-chevron">▾</span>
+        </button>
+      </div>
     </div>
 
     <div class="card controls-strip" id="controls-strip">
@@ -747,6 +788,7 @@ def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="Wor
       </div>
 
       <div class="action-buttons-wrap">
+        <a href="satellite_day_night.html" class="btn btn-satellite" title="Switch to Topographic Satellite & Live Day/Night View">🛰️ Satellite & Day/Night ↗</a>
         <button id="toggle-labels" class="btn">Labels: ON</button>
         <button id="reset-btn" class="btn">Reset</button>
         <button id="export-jpg-btn" class="btn btn-primary">Download JPEG</button>
@@ -1695,7 +1737,17 @@ def main():
                         help="Projection mode: 'natural' (clean) or 'oblique' (rough tilt)")
     parser.add_argument("--no-browser", action="store_true", help="Do not automatically launch browser")
     parser.add_argument("--no-png", action="store_true", help="Skip static PNG export")
+    parser.add_argument("--satellite", action="store_true", help="Open Topographic Satellite & Real-Time Day/Night View in browser")
     args = parser.parse_args()
+
+    if args.satellite:
+        sat_html = BASE_DIR / "satellite_day_night.html"
+        if not sat_html.exists():
+            from build_satellite import generate_satellite_html
+            generate_satellite_html()
+        print("[*] Opening Topographic Satellite & Real-Time Day/Night View...")
+        webbrowser.open(f"file://{sat_html.resolve()}")
+        return
 
     world_data = load_world_data()
 

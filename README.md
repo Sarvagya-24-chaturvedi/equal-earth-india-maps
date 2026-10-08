@@ -9,9 +9,10 @@ An open-source cartographic suite and interactive web application for generating
 
 ---
 
-## 🌐 Live Interactive Map
+## 🌐 Live Interactive Maps
 
-👉 **[Launch Interactive Web Map](https://sarvagya-24-chaturvedi.github.io/equal-earth-india-maps/)**
+- 🗺️ **[Equal Earth Political Map (Default View)](https://sarvagya-24-chaturvedi.github.io/equal-earth-india-maps/)**
+- 🛰️ **[Topographic Satellite & Real-Time Day/Night Map](https://sarvagya-24-chaturvedi.github.io/equal-earth-india-maps/satellite_day_night.html)**
 
 ---
 
@@ -63,6 +64,26 @@ This repository corrects these discrepancies while utilizing the **Equal Earth p
 
 ---
 
+## 🛰️ Topographic Satellite & Real-Time Day/Night View Map
+
+A dedicated standalone view mode (`satellite_day_night.html`) integrating authoritative spaceborne imagery with Survey of India vector cartography:
+
+- **🌓 Live Day & Night Solar Terminator**:
+  - Precision astronomical solar model computing Greenwich Mean Sidereal Time (GMST), solar declination $\delta$, and subsolar zenith coordinates.
+  - Renders the exact daylight vs. darkness boundary with a smooth twilight transition.
+  - **Live Digital Clocks**: Displays synchronized **UTC** and **IST (Indian Standard Time, UTC+5:30)**.
+  - **24-Hour Time Scrubber**: Scrub through 24 hours to watch the sunrise over the Bay of Bengal, midday over New Delhi, and sunset over Mumbai.
+  - **Animated 24h Loop**: Automatically animate the Earth's diurnal rotation.
+- **🌍 NASA Blue Marble**: Shaded relief topography, land cover, and ocean bathymetry from NASA Earthdata GIBS.
+- **🛰️ NASA MODIS Terra TrueColor**: Daily real-time satellite pass showing atmospheric dynamics, snow cover, and seasonal foliage.
+- **🌃 NASA Black Marble (VIIRS Earth at Night)**: Nighttime city lights and human settlements blended with screen blending over nocturnal Earth.
+- **🏔️ OpenTopoMap**: High-detail topographic elevation contours and terrain relief.
+- **🛰️ ESRI High-Resolution Satellite**: 50cm global aerial and satellite imagery.
+- **🇮🇳 Survey of India Sovereign Boundary Overlay**: Full SOI-compliant sovereign boundary of India (J&K, Ladakh, Aksai Chin, Siachen, Arunachal Pradesh) rendered as a gold vector layer.
+- **⚠️ Disputed Borders**: Serbia-Kosovo, Morocco-Western Sahara (SADR), and Bir Tawil rendered in Google Maps style light dashed lines.
+
+---
+
 ## 🚀 Quick Start (Local Setup)
 
 ### 1. Clone the repository
@@ -80,16 +101,21 @@ pip install -r requirements.txt
 
 *(Or simply `pip install matplotlib cartopy shapely`)*
 
-### 3. Run Interactive Map Generator
+### 3. Run Interactive Maps
 ```bash
-# Interactive mode (prompts for country or coordinates)
+# 1. Political Equal Earth Map:
 python map.py
 
 # Direct CLI arguments:
 python map.py --target India
 python map.py --target "Indian Ocean"
-python map.py --target "Vatican City"
 python map.py --lon 78.0 --lat 20.0
+
+# 2. Topographic Satellite & Real-Time Day/Night Viewer:
+python map.py --satellite
+
+# Rebuild satellite portal directly:
+python build_satellite.py
 ```
 
 This will automatically generate the interactive HTML application and launch it in your browser, along with exporting a high-resolution PNG.

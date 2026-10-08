@@ -204,6 +204,42 @@
       border-color: #047857;
     }
 
+    .btn-satellite {
+      background: #0f172a;
+      border-color: #0284c7;
+      color: #38bdf8;
+      text-decoration: none;
+    }
+
+    .btn-satellite:hover {
+      background: #0284c7;
+      border-color: #0284c7;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(2, 132, 199, 0.4);
+    }
+
+    .nav-satellite-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 11px;
+      background: #0f172a;
+      border: 1px solid #0284c7;
+      border-radius: 6px;
+      color: #38bdf8;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .nav-satellite-btn:hover {
+      background: #0284c7;
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
     /* Map Display Viewport */
     #map-container {
       width: 100vw;
@@ -622,10 +658,15 @@
         </h1>
         <p>Google Maps format · Bold names · Light dashed disputed borders</p>
       </div>
-      <button id="mobile-toggle-btn" class="mobile-controls-toggle" aria-label="Toggle Controls">
-        <span>⚙️ Controls</span>
-        <span id="toggle-chevron">▾</span>
-      </button>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <a href="satellite_day_night.html" class="nav-satellite-btn" title="Switch to Topographic Satellite & Real-Time Day/Night View">
+          🛰️ Topographic & Live Day/Night ↗
+        </a>
+        <button id="mobile-toggle-btn" class="mobile-controls-toggle" aria-label="Toggle Controls">
+          <span>⚙️ Controls</span>
+          <span id="toggle-chevron">▾</span>
+        </button>
+      </div>
     </div>
 
     <div class="card controls-strip" id="controls-strip">
@@ -656,6 +697,7 @@
       </div>
 
       <div class="action-buttons-wrap">
+        <a href="satellite_day_night.html" class="btn btn-satellite" title="Switch to Topographic Satellite & Live Day/Night View">🛰️ Satellite & Day/Night ↗</a>
         <button id="toggle-labels" class="btn">Labels: ON</button>
         <button id="reset-btn" class="btn">Reset</button>
         <button id="export-jpg-btn" class="btn btn-primary">Download JPEG</button>
