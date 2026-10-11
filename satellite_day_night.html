@@ -1140,6 +1140,21 @@
               nightLightsOverlay.addTo(map);
             }
             nightLightsOverlay.repaint();
+          } else if (layerKey === 'modis') {
+            // Fix: Render Blue Marble as a seamless background fallback for MODIS Pass
+            // This prevents orbital swath gaps from rendering as raw black strips.
+            activeBaseLayer = baseLayers.bluemarble;
+            activeBaseLayer.addTo(map);
+
+            const modisOverlay = baseLayers.modis;
+            modisOverlay.addTo(map);
+
+            if (nightLayerGroup && map.hasLayer(nightLayerGroup)) {
+              map.removeLayer(nightLayerGroup);
+            }
+            if (map.hasLayer(nightLightsOverlay)) {
+              map.removeLayer(nightLightsOverlay);
+            }
           } else {
             activeBaseLayer = baseLayers[layerKey];
             activeBaseLayer.addTo(map);
