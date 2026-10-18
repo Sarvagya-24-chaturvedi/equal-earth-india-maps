@@ -678,7 +678,7 @@
             <span class="clock-val" id="time-utc">--:--:-- UTC</span>
           </div>
           <div>
-            <span style="font-size: 10px; color: var(--text-muted);">UTC+5:30:</span>
+            <span style="font-size: 10px; color: var(--text-muted);" id="clock-loc-label">UTC+5:30 (India):</span>
             <span class="clock-val clock-ist" id="time-ist">--:--:--</span>
           </div>
           <button class="btn-sm live-btn" id="btn-live">⚡ Jump to Live</button>
@@ -954,20 +954,13 @@
         }
 
         // Update Clock Display & Coordinates
-        const pad = (n) => String(n).padStart(2, '0');
-        const utcStr = `${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())} UTC`;
-
-        const istDate = new Date(date.getTime() + (5.5 * 3600 * 1000));
-        const istStr = `${pad(istDate.getUTCHours())}:${pad(istDate.getUTCMinutes())}:${pad(istDate.getUTCSeconds())} IST`;
-
-        document.getElementById('time-utc').textContent = utcStr;
-        document.getElementById('time-ist').textContent = istStr;
+        updateTopClocks(date);
         document.getElementById('subsolar-coords').textContent =
           `Lat: ${Math.abs(sunLat).toFixed(1)}°${sunLat >= 0 ? 'N' : 'S'}, Lon: ${Math.abs(solar.lon).toFixed(1)}°${solar.lon >= 0 ? 'E' : 'W'}`;
 
       }
 
-      // 5. Simulation Date & Live Timezone Utilities
+      // 5. Simulation Date & Live Timezone Utilities (True World Timezone Map)
       let isPlaying = false;
       let playTimer = null;
       let scrubOffsetMinutes = 0;
@@ -977,84 +970,186 @@
         return new Date(now.getTime() + (scrubOffsetMinutes * 60 * 1000));
       }
 
-      function formatUtcOffset(offsetMinutes) {
-        const sign = offsetMinutes >= 0 ? '+' : '-';
-        const absM = Math.abs(offsetMinutes);
-        const h = Math.floor(absM / 60);
-        const m = absM % 60;
-        return m > 0 ? `UTC${sign}${h}:${String(m).padStart(2, '0')}` : `UTC${sign}${h}`;
+      function wrapLon(lon) {
+        return ((lon + 180) % 360 + 360) % 360 - 180;
       }
 
-      const ISO_TZ_MINUTES = {
-        'IN': 330,  // India UTC+5:30
-        'CN': 480,  // China UTC+8
-        'JP': 540,  // Japan UTC+9
-        'KR': 540,  // South Korea UTC+9
-        'GB': 0,    // UK UTC+0
-        'FR': 60,   // France UTC+1
-        'DE': 60,   // Germany UTC+1
-        'IT': 60,   // Italy UTC+1
-        'ES': 60,   // Spain UTC+1
-        'TR': 180,  // Turkey UTC+3
-        'SA': 180,  // Saudi Arabia UTC+3
-        'EG': 120,  // Egypt UTC+2
-        'ZA': 120,  // South Africa UTC+2
-        'NG': 60,   // Nigeria UTC+1
-        'ID': 420,  // Indonesia UTC+7
-        'TH': 420,  // Thailand UTC+7
-        'VN': 420,  // Vietnam UTC+7
-        'PK': 300,  // Pakistan UTC+5
-        'BD': 360,  // Bangladesh UTC+6
-        'LK': 330,  // Sri Lanka UTC+5:30
-        'NP': 345,  // Nepal UTC+5:45
-        'MM': 390,  // Myanmar UTC+6:30
-        'IR': 210,  // Iran UTC+3:30
-        'AF': 270,  // Afghanistan UTC+4:30
-        'AU': 600,  // Australia (Sydney) UTC+10
-        'NZ': 720,  // New Zealand UTC+12
-        'BR': -180, // Brazil UTC-3
-        'AR': -180, // Argentina UTC-3
-        'MX': -360, // Mexico City UTC-6
-        'CA': -300, // Canada (Toronto) UTC-5
-        'US': -300  // US (Eastern) UTC-5
-      };
+      function resolveMultiTz(code, lat, lon) {
+        lon = wrapLon(lon);
+        if (code === 'RU') {
+          if (lon < 30) return 'Europe/Kaliningrad'; // Kaliningrad UTC+2
+          if (lon < 49) return 'Europe/Moscow';      // Moscow UTC+3
+          if (lon < 53) return 'Europe/Samara';      // Samara UTC+4
+          if (lon < 68) return 'Asia/Yekaterinburg'; // Yekaterinburg UTC+5
+          if (lon < 78) return 'Asia/Omsk';          // Omsk UTC+6
+          if (lon < 98) return 'Asia/Krasnoyarsk';   // Krasnoyarsk / Novosibirsk UTC+7
+          if (lon < 114) return 'Asia/Irkutsk';      // Irkutsk UTC+8
+          if (lon < 130) return 'Asia/Yakutsk';      // Yakutsk UTC+9
+          if (lon < 143) return 'Asia/Vladivostok';  // Vladivostok UTC+10
+          if (lon < 160) return 'Asia/Magadan';      // Magadan / Sakhalin UTC+11
+          return 'Asia/Kamchatka';                   // Kamchatka / Anadyr UTC+12
+        }
+        if (code === 'US') {
+          if (lat > 51 && lon < -129) return 'America/Anchorage';
+          if (lon < -172 || (lat < 30 && lon < -152 && lon > -179)) return 'Pacific/Honolulu';
+          if (lat > 17 && lat < 23 && lon > -161 && lon < -154) return 'Pacific/Honolulu';
+          if (lon < -115) return 'America/Los_Angeles';
+          if (lon < -102) return 'America/Denver';
+          if (lon < -87) return 'America/Chicago';
+          if (lon < -64) return 'America/New_York';
+          return 'America/Puerto_Rico';
+        }
+        if (code === 'CA') {
+          if (lon < -120) return 'America/Vancouver';
+          if (lon < -110) return 'America/Edmonton';
+          if (lon < -90) return 'America/Winnipeg';
+          if (lon < -77) return 'America/Toronto';
+          if (lat > 60) return 'America/Iqaluit';
+          return 'America/Halifax';
+        }
+        if (code === 'AU') {
+          if (lon < 129) return 'Australia/Perth';
+          if (lon < 138) return 'Australia/Darwin';
+          if (lon < 141.5 && lat > -32) return 'Australia/Adelaide';
+          if (lat < -39) return 'Australia/Hobart';
+          return 'Australia/Sydney';
+        }
+        if (code === 'BR') {
+          if (lon < -68) return 'America/Rio_Branco';
+          if (lon < -54) return 'America/Manaus';
+          return 'America/Sao_Paulo';
+        }
+        if (code === 'MX') {
+          if (lon < -109) return 'America/Tijuana';
+          if (lon < -102) return 'America/Chihuahua';
+          return 'America/Mexico_City';
+        }
+        if (code === 'ID') {
+          if (lon < 110) return 'Asia/Jakarta';
+          if (lon < 125) return 'Asia/Makassar';
+          return 'Asia/Jayapura';
+        }
+        if (code === 'KZ') {
+          return 'Asia/Almaty';
+        }
+        if (code === 'CL') {
+          if (lat < -48) return 'America/Punta_Arenas';
+          if (lon < -90) return 'Pacific/Easter';
+          return 'America/Santiago';
+        }
+        if (code === 'CD') {
+          return lon < 22 ? 'Africa/Kinshasa' : 'Africa/Lubumbashi';
+        }
+        if (code === 'PT') {
+          if (lat < 36) return 'Atlantic/Madeira';
+          if (lon < -20) return 'Atlantic/Azores';
+          return 'Europe/Lisbon';
+        }
+        if (code === 'ES') {
+          if (lat < 30 && lon < -10) return 'Atlantic/Canary';
+          return 'Europe/Madrid';
+        }
+        if (code === 'NZ') {
+          if (lon > 175 || lon < -175) return 'Pacific/Chatham';
+          return 'Pacific/Auckland';
+        }
+        if (code === 'GL') {
+          if (lon > -20) return 'America/Danmarkshavn';
+          if (lon > -45) return 'America/Nuuk';
+          return 'America/Thule';
+        }
+        return null;
+      }
 
-      function getPlaceTimeInfo(lat, lon, iso) {
-        const now = getCurrentSimDate();
-        let offsetMinutes = Math.round(lon / 15.0) * 60;
-        
-        if (iso && ISO_TZ_MINUTES[iso] !== undefined) {
-          if (iso === 'RU' || iso === 'US' || iso === 'CA') {
-            offsetMinutes = Math.round(lon / 15.0) * 60;
-          } else {
-            offsetMinutes = ISO_TZ_MINUTES[iso];
+      function ianaFromLon(lon) {
+        const hours = Math.round(wrapLon(lon) / 15);
+        const inverted = -hours;
+        if (inverted === 0) return 'Etc/UTC';
+        return 'Etc/GMT' + (inverted > 0 ? '+' + inverted : inverted);
+      }
+
+      function resolveIana(lat, lon, props) {
+        if (props) {
+          const iso = String(props.iso_a2 || '');
+          const named = IANA_BY_NAME[props.name];
+          if (named) return named;
+          const mapped = IANA_BY_ISO[iso];
+          if (mapped) {
+            if (mapped.indexOf('MULTI:') === 0) {
+              return resolveMultiTz(mapped.slice(6), lat, lon) || ianaFromLon(lon);
+            }
+            return mapped;
           }
         }
+        return ianaFromLon(lon);
+      }
 
-        const localMs = now.getTime() + (offsetMinutes * 60 * 1000);
-        const localD = new Date(localMs);
+      function formatTimeFromIana(iana, date) {
+        try {
+          const parts = new Intl.DateTimeFormat('en-US', {
+            timeZone: iana,
+            timeZoneName: 'shortOffset',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          }).formatToParts(date);
+          
+          const timeParts = parts.filter(p => ['hour', 'minute', 'second'].includes(p.type));
+          const localTime = timeParts.map(p => p.value).join(':');
+          
+          let tzOffset = (parts.find(p => p.type === 'timeZoneName') || {}).value || 'UTC+0';
+          tzOffset = tzOffset.replace('GMT', 'UTC').replace('UTC+0', 'UTC±0');
+          tzOffset = tzOffset.replace(/UTC([+-])0(\d)/, 'UTC$1$2');
+          if (tzOffset === 'UTC' || tzOffset === 'UTC±0') tzOffset = 'UTC+0';
+          
+          return { localTime, tzOffset };
+        } catch(e) {
+          const pad = (n) => String(n).padStart(2, '0');
+          return {
+            localTime: `${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}`,
+            tzOffset: 'UTC+0'
+          };
+        }
+      }
+
+      let activeVisitedTz = 'Asia/Kolkata';
+      let activeVisitedLabel = 'UTC+5:30 (India)';
+
+      function setActiveVisitedTimezone(iana, label) {
+        activeVisitedTz = iana;
+        activeVisitedLabel = label;
+        updateTopClocks(getCurrentSimDate());
+      }
+
+      function updateTopClocks(date) {
         const pad = (n) => String(n).padStart(2, '0');
-        const timeStr = `${pad(localD.getUTCHours())}:${pad(localD.getUTCMinutes())}:${pad(localD.getUTCSeconds())}`;
-        const tzLabel = formatUtcOffset(offsetMinutes);
-        return { timeStr, tzLabel, offsetMinutes };
+        const utcStr = `${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())} UTC`;
+        document.getElementById('time-utc').textContent = utcStr;
+
+        const { localTime, tzOffset } = formatTimeFromIana(activeVisitedTz, date);
+        const locLabelEl = document.getElementById('clock-loc-label');
+        if (locLabelEl) locLabelEl.textContent = `${activeVisitedLabel || tzOffset}:`;
+        const timeIstEl = document.getElementById('time-ist');
+        if (timeIstEl) timeIstEl.textContent = `${localTime}`;
       }
 
       // 6. Live Clock & Scrubber Loop
       function tick() {
+        const simDate = getCurrentSimDate();
         if (!isPlaying) {
-          const simDate = getCurrentSimDate();
           updateTerminator(simDate);
+        } else {
+          updateTopClocks(simDate);
         }
 
         // Live update active popup live clock every second
         document.querySelectorAll('.popup-live-time').forEach(el => {
-          const pLat = parseFloat(el.getAttribute('data-lat'));
-          const pLon = parseFloat(el.getAttribute('data-lon'));
-          const pIso = el.getAttribute('data-iso') || '';
-          if (!isNaN(pLat) && !isNaN(pLon)) {
-            const info = getPlaceTimeInfo(pLat, pLon, pIso);
+          const pIana = el.getAttribute('data-iana');
+          if (pIana) {
+            const { localTime, tzOffset } = formatTimeFromIana(pIana, simDate);
             const disp = el.querySelector('.popup-time-display');
-            if (disp) disp.textContent = `${info.timeStr} (${info.tzLabel})`;
+            if (disp) disp.textContent = `${localTime} (${tzOffset})`;
           }
         });
       }
@@ -1150,23 +1245,27 @@
         let normLon = ((e.latlng.lng + 180) % 360) - 180;
         if (normLon < -180) normLon += 360;
 
-        const info = getPlaceTimeInfo(lat, normLon, null);
+        const iana = ianaFromLon(normLon);
+        const { localTime, tzOffset } = formatTimeFromIana(iana, getCurrentSimDate());
+        setActiveVisitedTimezone(iana, `${tzOffset}`);
+
         const latStr = `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}`;
         const lonStr = `${Math.abs(normLon).toFixed(2)}°${normLon >= 0 ? 'E' : 'W'}`;
 
         L.popup()
-          .setLatLng([lat, normLon])
+          .setLatLng(e.latlng)
           .setContent(`
             <div class="country-popup-box">
-              <div style="font-size: 13.5px; font-weight: 700; color: #ffffff; margin-bottom: 4px;">
+              <div style="font-size: 13.5px; font-weight: 700; color: #ffffff; margin-bottom: 3px;">
                 📍 Selected Coordinates
               </div>
-              <div class="popup-live-time" data-lat="${lat}" data-lon="${normLon}" data-iso="">
-                <span style="font-size: 11px; color: #f59e0b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">🕒 Live Local Time</span><br>
-                <span class="popup-time-display" style="font-size: 14px; font-weight: 700; color: #fef08a; font-family: monospace;">${info.timeStr} (${info.tzLabel})</span>
+              <div class="popup-live-time" data-lat="${lat}" data-lon="${normLon}" data-iana="${iana}">
+                <span style="font-size: 10px; color: #f59e0b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px;">🕒 LIVE LOCAL TIME</span><br>
+                <span class="popup-time-display" style="font-size: 15px; font-weight: 800; color: #fef08a; font-family: ui-monospace, SFMono-Regular, monospace;">${localTime} (${tzOffset})</span>
               </div>
-              <div style="font-size: 11px; color: #94a3b8; margin-top: 5px;">
-                Lat: ${latStr} · Lon: ${lonStr}
+              <div style="font-size: 11px; color: #94a3b8; margin-top: 5px; line-height: 1.4;">
+                <strong>Coordinates:</strong> ${latStr}, ${lonStr}<br>
+                <strong>Civil Timezone:</strong> ${tzOffset}
               </div>
             </div>
           `)
@@ -1193,25 +1292,37 @@
             fillOpacity: 0.08
           },
           onEachFeature: (feature, layer) => {
-            layer.bindPopup(() => {
-              const info = getPlaceTimeInfo(28.6139, 77.2090, 'IN');
-              return `
-                <div class="country-popup-box">
-                  <div style="font-size: 14px; font-weight: 700; color: #f59e0b; margin-bottom: 4px;">
-                    🇮🇳 Republic of India
+            layer.on('click', (e) => {
+              const lat = e.latlng.lat;
+              const lon = wrapLon(e.latlng.lng);
+              const iana = 'Asia/Kolkata';
+              const { localTime, tzOffset } = formatTimeFromIana(iana, getCurrentSimDate());
+              setActiveVisitedTimezone(iana, 'UTC+5:30 (India)');
+
+              const latStr = `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}`;
+              const lonStr = `${Math.abs(lon).toFixed(2)}°${lon >= 0 ? 'E' : 'W'}`;
+
+              L.popup()
+                .setLatLng(e.latlng)
+                .setContent(`
+                  <div class="country-popup-box">
+                    <div style="font-size: 14.5px; font-weight: 800; color: #f59e0b; margin-bottom: 3px;">
+                      🇮🇳 Republic of India
+                    </div>
+                    <div class="popup-live-time" data-lat="${lat}" data-lon="${lon}" data-iana="${iana}">
+                      <span style="font-size: 10px; color: #f59e0b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px;">🕒 LIVE LOCAL TIME</span><br>
+                      <span class="popup-time-display" style="font-size: 15px; font-weight: 800; color: #fef08a; font-family: ui-monospace, SFMono-Regular, monospace;">${localTime} (${tzOffset})</span>
+                    </div>
+                    <div style="font-size: 11.5px; color: #cbd5e1; margin-top: 5px; line-height: 1.5;">
+                      <strong>Boundary:</strong> 100% Official Survey of India (SOI)<br>
+                      <strong>Timezone:</strong> Indian Standard Time (${tzOffset})<br>
+                      <strong>Clicked Location:</strong> ${latStr}, ${lonStr}<br>
+                      <em>Includes Jammu & Kashmir, Ladakh, Aksai Chin, Siachen, Arunachal Pradesh, Andaman & Nicobar, Lakshadweep</em><br>
+                      <a href="${feature.properties.wiki || 'https://en.wikipedia.org/wiki/India'}" target="_blank" style="color: #38bdf8; text-decoration: underline;">Wikipedia Article ↗</a>
+                    </div>
                   </div>
-                  <div class="popup-live-time" data-lat="28.6139" data-lon="77.2090" data-iso="IN">
-                    <span style="font-size: 11px; color: #f59e0b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">🕒 Live Local Time</span><br>
-                    <span class="popup-time-display" style="font-size: 14px; font-weight: 700; color: #fef08a; font-family: monospace;">${info.timeStr} (${info.tzLabel})</span>
-                  </div>
-                  <div style="font-size: 11.5px; color: #cbd5e1; margin-top: 6px; line-height: 1.5;">
-                    <strong>Boundary:</strong> 100% Official Survey of India (SOI)<br>
-                    <strong>Status:</strong> Authoritative Sovereign Territory<br>
-                    <em>Includes Jammu & Kashmir, Ladakh, Aksai Chin, Siachen, Arunachal Pradesh, Andaman & Nicobar, Lakshadweep</em><br>
-                    <a href="${feature.properties.wiki || 'https://en.wikipedia.org/wiki/India'}" target="_blank" style="color: #38bdf8; text-decoration: underline;">Wikipedia Article ↗</a>
-                  </div>
-                </div>
-              `;
+                `)
+                .openOn(map);
             });
           }
         }).addTo(map);
@@ -1250,25 +1361,36 @@
         },
         onEachFeature: (feature, layer) => {
           const props = feature.properties;
-          layer.bindPopup(() => {
-            const centroid = props.centroid || [0, 0];
-            const info = getPlaceTimeInfo(centroid[1], centroid[0], props.iso_a2);
-            return `
-              <div class="country-popup-box">
-                <div style="font-size: 14px; font-weight: 700; color: #ffffff; margin-bottom: 4px;">
-                  ${props.name}
+          layer.on('click', (e) => {
+            const lat = e.latlng.lat;
+            const lon = wrapLon(e.latlng.lng);
+            const iana = resolveIana(lat, lon, props);
+            const { localTime, tzOffset } = formatTimeFromIana(iana, getCurrentSimDate());
+            setActiveVisitedTimezone(iana, `${tzOffset} (${props.name})`);
+
+            const latStr = `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}`;
+            const lonStr = `${Math.abs(lon).toFixed(2)}°${lon >= 0 ? 'E' : 'W'}`;
+
+            L.popup()
+              .setLatLng(e.latlng)
+              .setContent(`
+                <div class="country-popup-box">
+                  <div style="font-size: 14.5px; font-weight: 800; color: #ffffff; margin-bottom: 3px;">
+                    ${props.name}
+                  </div>
+                  <div class="popup-live-time" data-lat="${lat}" data-lon="${lon}" data-iana="${iana}">
+                    <span style="font-size: 10px; color: #f59e0b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px;">🕒 LIVE LOCAL TIME</span><br>
+                    <span class="popup-time-display" style="font-size: 15px; font-weight: 800; color: #fef08a; font-family: ui-monospace, SFMono-Regular, monospace;">${localTime} (${tzOffset})</span>
+                  </div>
+                  <div style="font-size: 11.5px; color: #cbd5e1; margin-top: 5px; line-height: 1.5;">
+                    <strong>Timezone:</strong> ${iana.replace(/_/g, ' ')} (${tzOffset})<br>
+                    <strong>Clicked Location:</strong> ${latStr}, ${lonStr}<br>
+                    ${props.iso_a2 ? '<strong>ISO Code:</strong> ' + props.iso_a2 + '<br>' : ''}
+                    <a href="${props.wiki || '#'}" target="_blank" style="color: #38bdf8; text-decoration: underline;">Wikipedia Article ↗</a>
+                  </div>
                 </div>
-                <div class="popup-live-time" data-lat="${centroid[1]}" data-lon="${centroid[0]}" data-iso="${props.iso_a2 || ''}">
-                  <span style="font-size: 11px; color: #f59e0b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">🕒 Live Local Time</span><br>
-                  <span class="popup-time-display" style="font-size: 14px; font-weight: 700; color: #fef08a; font-family: monospace;">${info.timeStr} (${info.tzLabel})</span>
-                </div>
-                <div style="font-size: 11.5px; color: #cbd5e1; margin-top: 6px; line-height: 1.5;">
-                  <strong>ISO Code:</strong> ${props.iso_a2 || props.iso_a3 || 'N/A'}<br>
-                  <strong>Centroid:</strong> ${props.centroid ? props.centroid[1].toFixed(2) + '°N, ' + props.centroid[0].toFixed(2) + '°E' : 'N/A'}<br>
-                  <a href="${props.wiki || '#'}" target="_blank" style="color: #38bdf8; text-decoration: underline;">Wikipedia Article ↗</a>
-                </div>
-              </div>
-            `;
+              `)
+              .openOn(map);
           });
         }
       }).addTo(map);
@@ -1405,43 +1527,55 @@
           const lat = feat.properties.centroid[1];
           const lon = feat.properties.centroid[0];
           map.flyTo([lat, lon], 5, { duration: 1.5 });
+          const tz = resolveIana(lat, lon, feat.properties);
+          setActiveVisitedTimezone(tz.iana, `${tz.offsetStr} (${feat.properties.name || 'Selected'})`);
         }
       });
 
       // 11. Dock & Quick Navigation Shortcuts
       document.getElementById('dock-india').addEventListener('click', () => {
         map.flyTo([22.0, 78.5], 5, { duration: 1.2 });
+        setActiveVisitedTimezone('Asia/Kolkata', 'UTC+5:30 (India)');
       });
       document.getElementById('btn-fly-india').addEventListener('click', () => {
         map.flyTo([22.0, 78.5], 5, { duration: 1.2 });
+        setActiveVisitedTimezone('Asia/Kolkata', 'UTC+5:30 (India)');
       });
 
       document.getElementById('dock-himalayas').addEventListener('click', () => {
         map.flyTo([32.5, 77.5], 6, { duration: 1.4 });
+        setActiveVisitedTimezone('Asia/Kolkata', 'UTC+5:30 (Himalayas)');
       });
 
       document.getElementById('dock-sun').addEventListener('click', () => {
         const solar = getSolarCoordinates(getCurrentSimDate());
         map.flyTo([solar.lat, solar.lon], 4, { duration: 1.5 });
+        const tz = resolveIana(solar.lat, solar.lon, {});
+        setActiveVisitedTimezone(tz.iana, `${tz.offsetStr} (Subsolar Point)`);
       });
 
       document.getElementById('dock-global').addEventListener('click', () => {
         map.flyTo([15.0, 0.0], 2, { duration: 1.2 });
+        setActiveVisitedTimezone('Etc/UTC', 'UTC+0 (Prime Meridian)');
       });
       document.getElementById('btn-fly-global').addEventListener('click', () => {
         map.flyTo([15.0, 0.0], 2, { duration: 1.2 });
+        setActiveVisitedTimezone('Etc/UTC', 'UTC+0 (Prime Meridian)');
       });
 
       document.getElementById('dock-americas').addEventListener('click', () => {
         map.flyTo([15.0, -85.0], 3, { duration: 1.2 });
+        setActiveVisitedTimezone('America/New_York', 'UTC-4 (Americas / NY)');
       });
 
       document.getElementById('dock-asia').addEventListener('click', () => {
         map.flyTo([15.0, 115.0], 3, { duration: 1.2 });
+        setActiveVisitedTimezone('Asia/Shanghai', 'UTC+8 (Asia-Pacific)');
       });
 
       document.getElementById('dock-europe').addEventListener('click', () => {
         map.flyTo([25.0, 20.0], 3, { duration: 1.2 });
+        setActiveVisitedTimezone('Europe/Paris', 'UTC+2 (Europe / Paris)');
       });
 
       // 12. Mobile Controls Toggle
