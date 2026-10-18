@@ -71,7 +71,7 @@ def build_interactive_html(
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Equal Earth India Maps · Geospatial Studio</title>
   
   <script src="d3.v7.min.js"></script>
@@ -246,11 +246,13 @@ def build_interactive_html(
       right: 0;
       bottom: 0;
       display: flex;
+      overflow: hidden;
     }}
 
     /* Collapsible Side Panel */
     .sidebar {{
       width: 340px;
+      flex-shrink: 0;
       background: var(--panel-bg);
       backdrop-filter: blur(10px);
       border-right: 1px solid var(--panel-border);
@@ -262,11 +264,11 @@ def build_interactive_html(
       flex-direction: column;
       gap: 16px;
       box-shadow: 2px 0 10px rgba(0, 0, 0, 0.03);
-      transition: transform 0.25s ease;
+      transition: margin-left 0.25s ease;
     }}
 
     .sidebar.collapsed {{
-      transform: translateX(-100%);
+      margin-left: -340px;
     }}
 
     .sidebar-section {{
@@ -367,7 +369,7 @@ def build_interactive_html(
       padding: 12px 14px;
       box-shadow: var(--card-shadow);
       z-index: 40;
-      pointer-events: none;
+      pointer-events: auto;
       transition: opacity 0.15s ease;
     }}
 
@@ -488,18 +490,293 @@ def build_interactive_html(
       display: none;
     }}
 
-    /* Responsive */
+    /* Visibility Utilities */
+    .pill-short {{
+      display: none;
+    }}
+    .pill-long {{
+      display: inline;
+    }}
+    .mobile-only-text {{
+      display: none;
+    }}
+    .desktop-exports {{
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }}
+    .mobile-export-dropdown {{
+      display: none;
+      position: relative;
+    }}
+    .sidebar-header-mobile {{
+      display: none;
+    }}
+    .sidebar-backdrop {{
+      display: none;
+    }}
+    .btn-close-inspector {{
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      line-height: 1;
+    }}
+    .btn-close-inspector:hover {{
+      background: #f1f5f9;
+      color: #0f172a;
+    }}
+
+    /* Responsive Mobile Layout */
     @media (max-width: 768px) {{
-      .sidebar {{
-        position: absolute;
-        width: 300px;
-        box-shadow: 4px 0 20px rgba(0,0,0,0.2);
+      .workspace {{
+        top: 48px;
       }}
+
+      header.top-navbar {{
+        height: 48px;
+        padding: 0 8px;
+        gap: 6px;
+      }}
+
+      .brand-section {{
+        gap: 5px;
+      }}
+
       .brand-title {{
-        font-size: 13px;
+        font-size: 12px;
       }}
+
+      .brand-sub {{
+        display: none;
+      }}
+
       .badge-soi {{
         display: none;
+      }}
+
+      .mobile-only-text {{
+        display: inline;
+      }}
+
+      #toggle-sidebar {{
+        padding: 5px 8px;
+        font-size: 11px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }}
+
+      /* Mode Pills on Mobile */
+      .mode-pills {{
+        padding: 2px;
+        gap: 2px;
+        flex-shrink: 1;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }}
+      .mode-pills::-webkit-scrollbar {{
+        display: none;
+      }}
+
+      .mode-pill {{
+        padding: 4px 7px;
+        font-size: 10.5px;
+        white-space: nowrap;
+        gap: 3px;
+      }}
+
+      .pill-long {{
+        display: none;
+      }}
+      .pill-short {{
+        display: inline;
+      }}
+
+      /* Actions on Mobile */
+      .top-actions {{
+        gap: 4px;
+      }}
+
+      .btn-reset {{
+        padding: 5px 7px;
+        font-size: 11px;
+      }}
+
+      .desktop-exports {{
+        display: none !important;
+      }}
+
+      .mobile-export-dropdown {{
+        display: block !important;
+      }}
+
+      .btn-export-toggle {{
+        padding: 5px 8px;
+        font-size: 11px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }}
+
+      .export-dropdown-menu {{
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 6px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        z-index: 200;
+        min-width: 190px;
+        overflow: hidden;
+      }}
+
+      .export-dropdown-menu.show {{
+        display: block;
+      }}
+
+      .export-menu-item {{
+        width: 100%;
+        text-align: left;
+        padding: 10px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #1e293b;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid #f1f5f9;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }}
+
+      .export-menu-item:last-child {{
+        border-bottom: none;
+      }}
+
+      .export-menu-item:active {{
+        background: #f1f5f9;
+      }}
+
+      /* Sidebar Off-Canvas Drawer on Mobile */
+      .sidebar {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        margin-left: 0 !important;
+        width: 86vw;
+        max-width: 330px;
+        height: 100vh;
+        z-index: 500;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
+        transform: translateX(-100%);
+        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      }}
+
+      .sidebar.open {{
+        transform: translateX(0);
+      }}
+
+      .sidebar.collapsed {{
+        margin-left: 0 !important;
+        transform: translateX(-100%);
+      }}
+
+      .sidebar-header-mobile {{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 4px;
+      }}
+
+      .btn-close {{
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #475569;
+        font-size: 16px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }}
+
+      .sidebar-backdrop {{
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 450;
+      }}
+
+      .sidebar-backdrop.show {{
+        display: block;
+      }}
+
+      /* Inspector Sheet on Mobile */
+      .state-inspector {{
+        top: auto;
+        bottom: 14px;
+        left: 12px;
+        right: 12px;
+        width: auto;
+        max-width: none;
+        padding: 10px 14px;
+        border-radius: 10px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        pointer-events: auto;
+      }}
+
+      /* Map Legend on Mobile */
+      .map-legend {{
+        bottom: 14px;
+        right: 12px;
+        padding: 6px 10px;
+        max-width: 150px;
+        font-size: 9.5px;
+      }}
+      .legend-title {{
+        font-size: 9.5px;
+        margin-bottom: 4px;
+      }}
+      .legend-item {{
+        font-size: 9px;
+        margin-bottom: 2px;
+      }}
+      .legend-swatch {{
+        width: 14px;
+        height: 10px;
+      }}
+
+      /* Floating Zoom Tools on Mobile */
+      .floating-tools {{
+        left: 12px;
+        bottom: 14px;
+        gap: 5px;
+      }}
+      .tool-btn {{
+        width: 34px;
+        height: 34px;
+        font-size: 15px;
       }}
     }}
   </style>
@@ -509,35 +786,76 @@ def build_interactive_html(
   <!-- Top Navigation Bar -->
   <header class="top-navbar">
     <div class="brand-section">
-      <button id="toggle-sidebar" class="btn" title="Toggle Settings Sidebar" aria-label="Toggle Sidebar">☰</button>
+      <button id="toggle-sidebar" class="btn" title="Toggle Settings & Layers" aria-label="Toggle Sidebar">
+        <span>☰</span>
+        <span class="mobile-only-text" style="font-size: 11px;">Layers</span>
+      </button>
       <div class="brand-title">
         <span>EQUAL EARTH</span>
-        <span style="font-weight: 400; color: #64748b;">· Studio</span>
+        <span class="brand-sub" style="font-weight: 400; color: #64748b;">· Studio</span>
       </div>
       <span class="badge-soi">100% SOI Sovereign Boundary</span>
     </div>
 
     <!-- Mode Switcher -->
     <div class="mode-pills">
-      <button class="mode-pill active" id="mode-india" data-mode="india">🇮🇳 India States & Thematic</button>
-      <button class="mode-pill" id="mode-global" data-mode="global">🌍 Global Equal Earth</button>
-      <a class="mode-pill" href="satellite_day_night.html" target="_blank" title="Open Real-Time Topographic Day/Night Map">🛰️ Satellite Day/Night ↗</a>
+      <button class="mode-pill active" id="mode-india" data-mode="india">
+        <span class="pill-long">🇮🇳 India States & Thematic</span>
+        <span class="pill-short">🇮🇳 India</span>
+      </button>
+      <button class="mode-pill" id="mode-global" data-mode="global">
+        <span class="pill-long">🌍 Global Equal Earth</span>
+        <span class="pill-short">🌍 Global</span>
+      </button>
+      <a class="mode-pill" href="satellite_day_night.html" target="_blank" title="Open Real-Time Topographic Day/Night Map">
+        <span class="pill-long">🛰️ Satellite Day/Night ↗</span>
+        <span class="pill-short">🛰️ Satellite ↗</span>
+      </a>
     </div>
 
     <!-- Top Action Buttons -->
     <div class="top-actions">
-      <button class="btn" id="btn-reset-view" title="Reset Map View">↺ Reset</button>
-      <button class="btn" id="btn-export-svg" title="Download Lossless SVG">SVG</button>
-      <button class="btn" id="btn-export-pdf" title="Download Vector PDF">PDF</button>
-      <button class="btn btn-primary" id="btn-export-png" title="Download High-Res 300 DPI PNG">PNG Export</button>
+      <button class="btn btn-reset" id="btn-reset-view" title="Reset Map View">↺ Reset</button>
+
+      <!-- Desktop Export Buttons -->
+      <div class="desktop-exports">
+        <button class="btn" id="btn-export-svg" title="Download Lossless SVG">SVG</button>
+        <button class="btn" id="btn-export-pdf" title="Download Vector PDF">PDF</button>
+        <button class="btn btn-primary" id="btn-export-png" title="Download High-Res 300 DPI PNG">PNG Export</button>
+      </div>
+
+      <!-- Mobile Export Dropdown -->
+      <div class="mobile-export-dropdown">
+        <button class="btn btn-primary btn-export-toggle" id="btn-mobile-export-toggle" title="Export Map">
+          <span>📥</span>
+          <span style="font-size: 11px;">Export</span>
+          <span style="font-size: 9px;">▾</span>
+        </button>
+        <div class="export-dropdown-menu" id="mobile-export-menu">
+          <button class="export-menu-item" id="btn-export-png-m">🖼️ High-Res PNG (300 DPI)</button>
+          <button class="export-menu-item" id="btn-export-svg-m">📐 Vector SVG</button>
+          <button class="export-menu-item" id="btn-export-pdf-m">📄 Vector PDF</button>
+        </div>
+      </div>
     </div>
   </header>
 
   <!-- Workspace -->
   <div class="workspace">
     
+    <!-- Mobile Backdrop -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
     <!-- Collapsible Sidebar -->
     <aside class="sidebar" id="sidebar">
+      
+      <!-- Mobile Close Bar -->
+      <div class="sidebar-header-mobile">
+        <div style="font-size: 13.5px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+          <span>⚙️ Settings & Layers</span>
+        </div>
+        <button id="btn-close-sidebar" class="btn-close" aria-label="Close Settings">✕</button>
+      </div>
       
       <!-- Section 1: Thematic & Metric Controls (India Mode) -->
       <div class="sidebar-section" id="sec-thematic">
@@ -698,8 +1016,11 @@ def build_interactive_html(
       <!-- Floating State Inspector Card -->
       <div class="state-inspector" id="state-inspector" style="display: none;">
         <div class="inspector-title">
-          <span id="inspect-name">Maharashtra</span>
-          <span class="inspector-code" id="inspect-code">IN-MH</span>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span id="inspect-name">Maharashtra</span>
+            <span class="inspector-code" id="inspect-code">IN-MH</span>
+          </div>
+          <button id="btn-close-inspector" class="btn-close-inspector" aria-label="Dismiss Card">✕</button>
         </div>
         <div class="inspector-metric" id="inspect-val">82.3%</div>
         <div class="inspector-metric-label" id="inspect-metric-label">Literacy Rate</div>
@@ -847,10 +1168,22 @@ def build_interactive_html(
           gSovereign.attr("transform", transform);
           gLabels.attr("transform", transform);
 
-          // Dynamic label sizing based on zoom
-          gLabels.selectAll("text").style("font-size", d => {{
-            const baseSize = d.properties.is_small_ut ? 6 : 8;
-            return Math.max(5, Math.min(16, baseSize / Math.sqrt(transform.k))) + "px";
+          // Scale-invariant label font-size & stroke so labels never get huge when zoomed in
+          const k = transform.k;
+          gLabels.selectAll("text").style("font-size", function(d) {{
+            const isCountry = d && d.properties && (d.properties.iso_a2 || d.properties.iso_a3);
+            const isIndia = d && d.properties && d.properties.name === "India";
+            const base = isIndia ? 11 : (isCountry ? 8.5 : 7.5);
+            const targetScreenPx = Math.min(13, Math.max(7, base + Math.log2(k) * 0.7));
+            return (targetScreenPx / k) + "px";
+          }}).style("stroke-width", function() {{
+            return (2.2 / k) + "px";
+          }});
+
+          gLabels.selectAll("circle").attr("r", function() {{
+            return (2.2 / Math.sqrt(k));
+          }}).style("stroke-width", function() {{
+            return (0.75 / k) + "px";
           }});
         }});
 
@@ -1023,10 +1356,31 @@ def build_interactive_html(
             }})
             .attr("stroke", theme.stateEdge)
             .attr("stroke-width", 0.6)
-            .style("cursor", "pointer")
             .on("mouseenter", function(event, d) {{
               if (currentMode !== "india") return;
               d3.select(this).attr("stroke", "#0f172a").attr("stroke-width", 1.5);
+              const stName = d.properties.ST_NM || d.properties.st_nm;
+              const val = dataMap ? dataMap[stName] : null;
+              const code = d.properties.st_code || d.properties.ST_ID || "";
+              
+              inspector.style("display", "block");
+              document.getElementById("inspect-name").textContent = stName;
+              document.getElementById("inspect-code").textContent = code;
+              
+              if (val !== null && val !== undefined) {{
+                const unit = (window.SAMPLE_DATASETS[currentMetric] || {{}}).unit || "";
+                document.getElementById("inspect-val").textContent = `${{val.toLocaleString()}} ${{unit}}`.trim();
+                document.getElementById("inspect-metric-label").textContent = (window.SAMPLE_DATASETS[currentMetric] || {{}}).label || "Value";
+              }} else {{
+                document.getElementById("inspect-val").textContent = "—";
+                document.getElementById("inspect-metric-label").textContent = "No data recorded";
+              }}
+            }})
+            .on("click", function(event, d) {{
+              if (currentMode !== "india") return;
+              event.stopPropagation();
+              d3.selectAll(".layer-states path").attr("stroke", theme.stateEdge).attr("stroke-width", 0.6);
+              d3.select(this).attr("stroke", "#0f172a").attr("stroke-width", 1.8);
               const stName = d.properties.ST_NM || d.properties.st_nm;
               const val = dataMap ? dataMap[stName] : null;
               const code = d.properties.st_code || d.properties.ST_ID || "";
@@ -1305,10 +1659,87 @@ def build_interactive_html(
         updateMap();
       }});
 
-      // Sidebar Toggle
-      document.getElementById("toggle-sidebar").addEventListener("click", () => {{
-        document.getElementById("sidebar").classList.toggle("collapsed");
+      // Sidebar Mobile & Desktop Behavior
+      const sidebar = document.getElementById("sidebar");
+      const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+      const toggleSidebarBtn = document.getElementById("toggle-sidebar");
+      const closeSidebarBtn = document.getElementById("btn-close-sidebar");
+
+      function openSidebar() {{
+        sidebar.classList.add("open");
+        sidebar.classList.remove("collapsed");
+        if (sidebarBackdrop) sidebarBackdrop.classList.add("show");
+      }}
+
+      function closeSidebar() {{
+        sidebar.classList.remove("open");
+        sidebar.classList.add("collapsed");
+        if (sidebarBackdrop) sidebarBackdrop.classList.remove("show");
+      }}
+
+      toggleSidebarBtn.addEventListener("click", () => {{
+        if (window.innerWidth <= 768) {{
+          if (sidebar.classList.contains("open")) {{
+            closeSidebar();
+          }} else {{
+            openSidebar();
+          }}
+        }} else {{
+          sidebar.classList.toggle("collapsed");
+        }}
       }});
+
+      if (closeSidebarBtn) closeSidebarBtn.addEventListener("click", closeSidebar);
+      if (sidebarBackdrop) sidebarBackdrop.addEventListener("click", closeSidebar);
+
+      // Mobile Export Dropdown Toggle
+      const mobileExportBtn = document.getElementById("btn-mobile-export-toggle");
+      const mobileExportMenu = document.getElementById("mobile-export-menu");
+      if (mobileExportBtn && mobileExportMenu) {{
+        mobileExportBtn.addEventListener("click", (e) => {{
+          e.stopPropagation();
+          mobileExportMenu.classList.toggle("show");
+        }});
+        document.addEventListener("click", () => {{
+          mobileExportMenu.classList.remove("show");
+        }});
+      }}
+
+      // Wire mobile export buttons to trigger corresponding export actions
+      const btnExportPngM = document.getElementById("btn-export-png-m");
+      if (btnExportPngM) {{
+        btnExportPngM.addEventListener("click", () => {{
+          if (mobileExportMenu) mobileExportMenu.classList.remove("show");
+          document.getElementById("btn-export-png").click();
+        }});
+      }}
+      const btnExportSvgM = document.getElementById("btn-export-svg-m");
+      if (btnExportSvgM) {{
+        btnExportSvgM.addEventListener("click", () => {{
+          if (mobileExportMenu) mobileExportMenu.classList.remove("show");
+          document.getElementById("btn-export-svg").click();
+        }});
+      }}
+      const btnExportPdfM = document.getElementById("btn-export-pdf-m");
+      if (btnExportPdfM) {{
+        btnExportPdfM.addEventListener("click", () => {{
+          if (mobileExportMenu) mobileExportMenu.classList.remove("show");
+          document.getElementById("btn-export-pdf").click();
+        }});
+      }}
+
+      // Close inspector button handler
+      const closeInspectorBtn = document.getElementById("btn-close-inspector");
+      if (closeInspectorBtn) {{
+        closeInspectorBtn.addEventListener("click", () => {{
+          inspector.style("display", "none");
+        }});
+      }}
+
+      // On mobile screens, collapse sidebar by default so map is visible
+      if (window.innerWidth <= 768) {{
+        closeSidebar();
+      }}
 
       // Control Event Listeners
       document.getElementById("sel-theme").addEventListener("change", e => {{
