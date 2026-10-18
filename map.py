@@ -82,6 +82,13 @@ def find_entity(query, world_data):
 
 def build_interactive_html(initial_lon=0.0, initial_lat=0.0, initial_target="World", mode="natural"):
     """Build the self-contained interactive Equal Earth web application."""
+    try:
+        from equal_earth.web_builder import build_interactive_html as builder_generate
+        init_mode = "india" if (initial_target and "India" in initial_target) else "global"
+        return builder_generate(initial_mode=init_mode)
+    except Exception as e:
+        pass
+
     with open(DATA_PATH, "r", encoding="utf-8") as f:
         geojson_str = f.read()
 

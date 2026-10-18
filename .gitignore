@@ -3,11 +3,17 @@
 venv/
 ENV/
 
-# Python Cache
+# Python Cache & Build
 __pycache__/
 *.py[cod]
 *$py.class
 .mpl_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
 
 # OS Specific
 .DS_Store

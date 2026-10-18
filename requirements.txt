@@ -2,3 +2,6 @@ matplotlib>=3.8.0
 cartopy>=0.22.0
 shapely>=2.0.0
 numpy>=1.24.0
+pyproj>=3.6.0
+pytest>=8.0.0
+pytest-cov>=4.0.0
