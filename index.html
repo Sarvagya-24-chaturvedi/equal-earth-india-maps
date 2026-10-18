@@ -79,15 +79,15 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      flex-wrap: nowrap;
     }
 
-    .title-area {
+    .title-area h1 {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.2px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      overflow: hidden;
-      white-space: nowrap;
+      gap: 8px;
     }
 
     .badge-soi {
@@ -99,7 +99,6 @@
       padding: 2px 7px;
       border-radius: 999px;
       letter-spacing: 0.3px;
-      flex-shrink: 0;
     }
 
     .title-area p {
@@ -692,7 +691,7 @@
       <div class="ctrl-group">
         <label for="proj-mode">Adjustment:</label>
         <select id="proj-mode">
-          <option value="natural" selected>Natural Viewport (Clean)</option>
+          <option value="natural" selected>Natural Viewport (Clean & Less Weird)</option>
           <option value="oblique" >Oblique Projection Tilt (Rough)</option>
         </select>
       </div>

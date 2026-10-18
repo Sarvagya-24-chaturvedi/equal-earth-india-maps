@@ -6,6 +6,10 @@ Includes:
 - NASA Blue Marble (Topography & Bathymetry)
 - NASA MODIS Terra TrueColor (Daily Real-Time Satellite Pass)
 - NASA Black Marble (VIIRS Earth at Night)
+- NASA NDSI Daily Snow & Ice Cover Layer
+- Live Real-Time Weather Map (Open-Meteo live temperatures & city conditions)
+- RainViewer Global Live Weather Radar (Rain & Snow Precipitation)
+- Google Maps Hybrid Satellite & Google Roads overlay with zoomable streets & city labels
 - Real-time Solar Terminator (Astronomical GMST & Subsolar Declination)
 - Survey of India 100% sovereign boundary (J&K, Ladakh, Aksai Chin, Siachen, Arunachal Pradesh)
 - Disputed borders in light dashed lines (Serbia-Kosovo, Morocco-SADR, Bir Tawil)
@@ -29,12 +33,76 @@ def generate_satellite_html():
 
     today_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
+    # Compact ISO-A2 -> IANA timezone. MULTI:* is resolved from lat/lon in JS.
+    iana_by_iso = {
+        "AF": "Asia/Kabul", "AX": "Europe/Helsinki", "AL": "Europe/Tirane", "DZ": "Africa/Algiers",
+        "AS": "Pacific/Pago_Pago", "AD": "Europe/Andorra", "AO": "Africa/Luanda", "AI": "America/Anguilla",
+        "AQ": "MULTI:AQ", "AG": "America/Antigua", "AR": "America/Argentina/Buenos_Aires", "AM": "Asia/Yerevan",
+        "AW": "America/Aruba", "AU": "MULTI:AU", "AT": "Europe/Vienna", "AZ": "Asia/Baku",
+        "BH": "Asia/Bahrain", "BD": "Asia/Dhaka", "BB": "America/Barbados", "BY": "Europe/Minsk",
+        "BE": "Europe/Brussels", "BZ": "America/Belize", "BJ": "Africa/Porto-Novo", "BM": "Atlantic/Bermuda",
+        "BT": "Asia/Thimphu", "BO": "America/La_Paz", "BA": "Europe/Sarajevo", "BW": "Africa/Gaborone",
+        "BR": "MULTI:BR", "IO": "Indian/Chagos", "VG": "America/Tortola", "BN": "Asia/Brunei",
+        "BG": "Europe/Sofia", "BF": "Africa/Ouagadougou", "BI": "Africa/Bujumbura", "CF": "Africa/Bangui",
+        "CV": "Atlantic/Cape_Verde", "KH": "Asia/Phnom_Penh", "CM": "Africa/Douala", "CA": "MULTI:CA",
+        "KY": "America/Cayman", "TD": "Africa/Ndjamena", "CL": "MULTI:CL", "CN": "Asia/Shanghai",
+        "CO": "America/Bogota", "KM": "Indian/Comoro", "CG": "Africa/Brazzaville", "CK": "Pacific/Rarotonga",
+        "CR": "America/Costa_Rica", "HR": "Europe/Zagreb", "CU": "America/Havana", "CW": "America/Curacao",
+        "CY": "Asia/Nicosia", "CZ": "Europe/Prague", "CD": "MULTI:CD", "DK": "Europe/Copenhagen",
+        "DJ": "Africa/Djibouti", "DM": "America/Dominica", "DO": "America/Santo_Domingo", "TL": "Asia/Dili",
+        "EC": "MULTI:EC", "EG": "Africa/Cairo", "SV": "America/El_Salvador", "GQ": "Africa/Malabo",
+        "ER": "Africa/Asmara", "EE": "Europe/Tallinn", "ET": "Africa/Addis_Ababa", "FK": "Atlantic/Stanley",
+        "FO": "Atlantic/Faroe", "FJ": "Pacific/Fiji", "FI": "Europe/Helsinki", "PF": "MULTI:PF",
+        "TF": "Indian/Kerguelen", "GA": "Africa/Libreville", "GM": "Africa/Banjul", "GE": "Asia/Tbilisi",
+        "DE": "Europe/Berlin", "GH": "Africa/Accra", "GI": "Europe/Gibraltar", "GR": "Europe/Athens",
+        "GL": "MULTI:GL", "GD": "America/Grenada", "GU": "Pacific/Guam", "GT": "America/Guatemala",
+        "GG": "Europe/Guernsey", "GN": "Africa/Conakry", "GW": "Africa/Bissau", "GY": "America/Guyana",
+        "HT": "America/Port-au-Prince", "HN": "America/Tegucigalpa", "HK": "Asia/Hong_Kong", "HU": "Europe/Budapest",
+        "IS": "Atlantic/Reykjavik", "IN": "Asia/Kolkata", "ID": "MULTI:ID", "IR": "Asia/Tehran",
+        "IQ": "Asia/Baghdad", "IE": "Europe/Dublin", "IM": "Europe/Isle_of_Man", "IL": "Asia/Jerusalem",
+        "IT": "Europe/Rome", "CI": "Africa/Abidjan", "JM": "America/Jamaica", "JP": "Asia/Tokyo",
+        "JE": "Europe/Jersey", "JO": "Asia/Amman", "KZ": "MULTI:KZ", "KE": "Africa/Nairobi",
+        "KI": "MULTI:KI", "KW": "Asia/Kuwait", "KG": "Asia/Bishkek", "LA": "Asia/Vientiane",
+        "LV": "Europe/Riga", "LB": "Asia/Beirut", "LS": "Africa/Maseru", "LR": "Africa/Monrovia",
+        "LY": "Africa/Tripoli", "LI": "Europe/Vaduz", "LT": "Europe/Vilnius", "LU": "Europe/Luxembourg",
+        "MO": "Asia/Macau", "MG": "Indian/Antananarivo", "MW": "Africa/Blantyre", "MY": "Asia/Kuala_Lumpur",
+        "MV": "Indian/Maldives", "ML": "Africa/Bamako", "MT": "Europe/Malta", "MH": "Pacific/Majuro",
+        "MR": "Africa/Nouakchott", "MU": "Indian/Mauritius", "MX": "MULTI:MX", "FM": "MULTI:FM",
+        "MD": "Europe/Chisinau", "MC": "Europe/Monaco", "MN": "Asia/Ulaanbaatar", "ME": "Europe/Podgorica",
+        "MS": "America/Montserrat", "MA": "Africa/Casablanca", "MZ": "Africa/Maputo", "MM": "Asia/Yangon",
+        "NA": "Africa/Windhoek", "NR": "Pacific/Nauru", "NP": "Asia/Kathmandu", "NL": "Europe/Amsterdam",
+        "NC": "Pacific/Noumea", "NZ": "MULTI:NZ", "NI": "America/Managua", "NE": "Africa/Niamey",
+        "NG": "Africa/Lagos", "NU": "Pacific/Niue", "NF": "Pacific/Norfolk", "KP": "Asia/Pyongyang",
+        "MK": "Europe/Skopje", "MP": "Pacific/Saipan", "OM": "Asia/Muscat", "PK": "Asia/Karachi",
+        "PW": "Pacific/Palau", "PS": "Asia/Gaza", "PA": "America/Panama", "PG": "Pacific/Port_Moresby",
+        "PY": "America/Asuncion", "PE": "America/Lima", "PH": "Asia/Manila", "PN": "Pacific/Pitcairn",
+        "PL": "Europe/Warsaw", "PT": "MULTI:PT", "PR": "America/Puerto_Rico", "QA": "Asia/Qatar",
+        "RO": "Europe/Bucharest", "RU": "MULTI:RU", "RW": "Africa/Kigali", "BL": "America/St_Barthelemy",
+        "SH": "Atlantic/St_Helena", "LC": "America/St_Lucia", "MF": "America/Marigot", "PM": "America/Miquelon",
+        "WS": "Pacific/Apia", "SM": "Europe/San_Marino", "SA": "Asia/Riyadh", "SN": "Africa/Dakar",
+        "RS": "Europe/Belgrade", "SC": "Indian/Mahe", "SL": "Africa/Freetown", "SG": "Asia/Singapore",
+        "SX": "America/Lower_Princes", "SK": "Europe/Bratislava", "SI": "Europe/Ljubljana", "SB": "Pacific/Guadalcanal",
+        "SO": "Africa/Mogadishu", "ZA": "Africa/Johannesburg", "GS": "Atlantic/South_Georgia", "KR": "Asia/Seoul",
+        "SS": "Africa/Juba", "ES": "MULTI:ES", "LK": "Asia/Colombo", "KN": "America/St_Kitts",
+        "VC": "America/St_Vincent", "SD": "Africa/Khartoum", "SR": "America/Paramaribo", "SE": "Europe/Stockholm",
+        "CH": "Europe/Zurich", "SY": "Asia/Damascus", "ST": "Africa/Sao_Tome", "CN-TW": "Asia/Taipei",
+        "TJ": "Asia/Dushanbe", "TZ": "Africa/Dar_es_Salaam", "TH": "Asia/Bangkok", "BS": "America/Nassau",
+        "TG": "Africa/Lome", "TO": "Pacific/Tongatapu", "TT": "America/Port_of_Spain", "TN": "Africa/Tunis",
+        "TR": "Europe/Istanbul", "TM": "Asia/Ashgabat", "TC": "America/Grand_Turk", "TV": "Pacific/Funafuti",
+        "AE": "Asia/Dubai", "UG": "Africa/Kampala", "UA": "Europe/Kyiv", "GB": "Europe/London",
+        "US": "MULTI:US", "VI": "America/St_Thomas", "UY": "America/Montevideo", "UZ": "Asia/Tashkent",
+        "VU": "Pacific/Efate", "VA": "Europe/Vatican", "VE": "America/Caracas", "VN": "Asia/Ho_Chi_Minh",
+        "WF": "Pacific/Wallis", "EH": "Africa/El_Aaiun", "YE": "Asia/Aden", "ZM": "Africa/Lusaka",
+        "ZW": "Africa/Harare", "SZ": "Africa/Mbabane"
+    }
+    iana_json = json.dumps(iana_by_iso, separators=(",", ":"))
+
     html_code = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Topographic Satellite & Real-Time Day/Night Map · Survey of India Boundary</title>
+  <title>Topographic Satellite, Weather & Real-Time Day/Night Map · Survey of India Boundary</title>
 
   <!-- Local Leaflet CSS & JS with CDN Fallback -->
   <link rel="stylesheet" href="leaflet.css" />
@@ -159,6 +227,12 @@ def generate_satellite_html():
       border: 1px solid rgba(16, 185, 129, 0.45);
     }}
 
+    .badge-weather {{
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.5);
+    }}
+
     .badge-pulse {{
       width: 6px;
       height: 6px;
@@ -204,7 +278,7 @@ def generate_satellite_html():
       display: flex;
       flex-direction: column;
       gap: 12px;
-      max-width: 500px;
+      max-width: 540px;
     }}
 
     .ctrl-row {{
@@ -220,7 +294,7 @@ def generate_satellite_html():
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      min-width: 52px;
+      min-width: 60px;
     }}
 
     /* Base Layer Selector Pills */
@@ -282,6 +356,11 @@ def generate_satellite_html():
     .toggle-chip:hover {{
       background: rgba(51, 65, 85, 0.8);
       color: #fff;
+    }}
+
+    .toggle-chip.highlight-weather {{
+      border-color: rgba(56, 189, 248, 0.5);
+      background: rgba(14, 116, 144, 0.25);
     }}
 
     /* Time Scrubber & Digital Clock */
@@ -471,8 +550,8 @@ def generate_satellite_html():
 
     /* Leaflet Popup Styling */
     .leaflet-popup-content-wrapper {{
-      background: rgba(15, 23, 42, 0.95) !important;
-      backdrop-filter: blur(10px);
+      background: rgba(15, 23, 42, 0.96) !important;
+      backdrop-filter: blur(12px);
       color: #f8fafc !important;
       border: 1px solid rgba(148, 163, 184, 0.3) !important;
       border-radius: 10px !important;
@@ -480,7 +559,7 @@ def generate_satellite_html():
     }}
 
     .leaflet-popup-tip {{
-      background: rgba(15, 23, 42, 0.95) !important;
+      background: rgba(15, 23, 42, 0.96) !important;
     }}
 
     /* Subsolar Marker Icon */
@@ -504,15 +583,62 @@ def generate_satellite_html():
     }}
 
     /* Country Label Marker */
+    .country-label-wrapper {{
+      background: transparent !important;
+      border: none !important;
+    }}
+
     .country-label-marker {{
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 10px;
+      font-size: 10.5px;
       font-weight: 700;
       color: #ffffff;
-      text-shadow: 0 0 3px #000, 0 0 5px #000, 1px 1px 2px #000;
+      text-shadow: 0 0 3px #000, 0 0 6px #000, 1px 1px 2px #000;
       white-space: nowrap;
       pointer-events: none;
       transform: translate(-50%, -50%);
+      text-align: center;
+      line-height: 1;
+      letter-spacing: -0.15px;
+    }}
+
+    .cursor-time-chip {{
+      position: absolute;
+      z-index: 1200;
+      pointer-events: none;
+      display: none;
+      background: rgba(15, 23, 42, 0.94);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #f8fafc;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      white-space: nowrap;
+    }}
+
+    .cursor-time-chip.visible {{
+      display: block;
+    }}
+
+    .cursor-time-chip .tz-local {{
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }}
+
+    .cursor-time-chip .tz-offset {{
+      color: #fbbf24;
+      font-weight: 800;
+      margin-left: 6px;
+    }}
+
+    .cursor-time-chip .tz-meta {{
+      font-size: 10.5px;
+      color: #94a3b8;
     }}
 
     /* Graticule Lat/Lon Labels */
@@ -525,6 +651,133 @@ def generate_satellite_html():
       padding: 1px 4px;
       border-radius: 3px;
       pointer-events: none;
+    }}
+
+    /* City Weather Badges */
+    .weather-badge-wrap {{
+      background: transparent !important;
+      border: none !important;
+    }}
+
+    .weather-badge {{
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      pointer-events: auto;
+    }}
+
+    .weather-badge:hover {{
+      transform: translate(-50%, -50%) scale(1.12);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65);
+      z-index: 9999;
+    }}
+
+    .weather-badge.temp-freeze {{
+      border-color: #38bdf8;
+      background: rgba(14, 116, 144, 0.88);
+      color: #e0f2fe;
+    }}
+
+    .weather-badge.temp-cold {{
+      border-color: #06b6d4;
+      background: rgba(15, 118, 110, 0.88);
+      color: #ccfbf1;
+    }}
+
+    .weather-badge.temp-mild {{
+      border-color: #10b981;
+      background: rgba(4, 120, 87, 0.88);
+      color: #d1fae5;
+    }}
+
+    .weather-badge.temp-warm {{
+      border-color: #f59e0b;
+      background: rgba(180, 83, 9, 0.88);
+      color: #fef3c7;
+    }}
+
+    .weather-badge.temp-hot {{
+      border-color: #ef4444;
+      background: rgba(185, 28, 28, 0.88);
+      color: #fee2e2;
+    }}
+
+    .w-temp {{
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+    }}
+
+    .w-snow-pill {{
+      background: rgba(56, 189, 248, 0.25);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.5);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 9px;
+      margin-left: 2px;
+      font-weight: 800;
+    }}
+
+    /* Live Weather Card Popup */
+    .weather-popup-card {{
+      padding: 4px;
+      min-width: 210px;
+    }}
+
+    .weather-popup-card .w-header {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+      padding-bottom: 6px;
+      margin-bottom: 6px;
+    }}
+
+    .weather-popup-card .w-city-title {{
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #f8fafc;
+    }}
+
+    .weather-popup-card .w-main-temp {{
+      font-size: 26px;
+      font-weight: 900;
+      color: #38bdf8;
+      line-height: 1;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin: 8px 0;
+    }}
+
+    .weather-popup-card .w-grid {{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-top: 8px;
+    }}
+
+    .weather-popup-card .w-grid-item {{
+      background: rgba(30, 41, 59, 0.65);
+      padding: 4px 6px;
+      border-radius: 5px;
+      border: 1px solid rgba(148, 163, 184, 0.15);
     }}
 
     /* Responsive Mobile Layout */
@@ -594,17 +847,19 @@ def generate_satellite_html():
 
   <!-- Map Canvas -->
   <div id="map"></div>
+  <div id="cursor-time" class="cursor-time-chip"></div>
 
   <!-- Top Floating Header & Controls -->
   <div class="top-bar">
     <div class="card header-card">
       <div class="title-area">
         <h1>
-          <span>🛰️ Topographic & Live Day/Night Map</span>
+          <span>🛰️ Topographic Satellite & Live Weather Map</span>
           <span class="badge badge-soi">SOI Sovereign Boundary</span>
-          <span class="badge badge-live"><span class="badge-pulse"></span> NASA Live Feeds</span>
+          <span class="badge badge-weather">🌡️ Live Weather & Snow</span>
+          <span class="badge badge-live"><span class="badge-pulse"></span> NASA & Open-Meteo</span>
         </h1>
-        <p>Real-Time Solar Terminator · NASA Blue Marble & Black Marble · Survey of India Compliant</p>
+        <p>Live Temperatures · NASA Snow & Ice Cover · Google Roads Overlay · Real-Time Solar Terminator</p>
       </div>
 
       <div style="display: flex; align-items: center; gap: 8px;">
@@ -625,17 +880,39 @@ def generate_satellite_html():
         <span class="ctrl-label">Basemap:</span>
         <div class="pill-group">
           <button class="pill-btn active" data-layer="daynight">🌓 Live Day/Night</button>
+          <button class="pill-btn" data-layer="googlehybrid">🛰️ Google Hybrid</button>
           <button class="pill-btn" data-layer="bluemarble">🌍 Blue Marble</button>
           <button class="pill-btn" data-layer="modis">🛰️ MODIS Pass</button>
           <button class="pill-btn" data-layer="blackmarble">🌃 Black Marble</button>
+          <button class="pill-btn" data-layer="googleroads">🚗 Google Streets</button>
           <button class="pill-btn" data-layer="opentopo">🏔️ Topo Terrain</button>
           <button class="pill-btn" data-layer="esri">🛰️ 50cm Satellite</button>
         </div>
       </div>
 
-      <!-- Vector Overlays -->
+      <!-- Overlays (Weather, Roads, Borders) -->
+      <div class="ctrl-row">
+        <span class="ctrl-label">Weather:</span>
+        <label class="toggle-chip highlight-weather">
+          <input type="checkbox" id="chk-snow" checked>
+          <span>❄️ NASA Snow & Ice Cover</span>
+        </label>
+        <label class="toggle-chip highlight-weather">
+          <input type="checkbox" id="chk-weather-cities" checked>
+          <span>🌡️ City Temperatures (Live)</span>
+        </label>
+        <label class="toggle-chip highlight-weather">
+          <input type="checkbox" id="chk-radar">
+          <span>🌧️ Rain/Snow Radar</span>
+        </label>
+      </div>
+
       <div class="ctrl-row">
         <span class="ctrl-label">Overlays:</span>
+        <label class="toggle-chip">
+          <input type="checkbox" id="chk-roads" checked>
+          <span>🛣️ Google Roads & Cities</span>
+        </label>
         <label class="toggle-chip">
           <input type="checkbox" id="chk-soi" checked>
           <span>🇮🇳 SOI Official Border</span>
@@ -694,6 +971,7 @@ def generate_satellite_html():
         <input type="text" id="country-search" class="search-input" list="country-list" placeholder="Search country...">
         <datalist id="country-list"></datalist>
         <button class="btn-sm" id="btn-fly-india">🇮🇳 Fly India</button>
+        <button class="btn-sm" id="btn-fly-istanbul">🇹🇷 Fly Istanbul</button>
         <button class="btn-sm" id="btn-fly-global">🌐 Global (0°)</button>
       </div>
     </div>
@@ -702,8 +980,9 @@ def generate_satellite_html():
   <!-- Bottom Quick Fly Dock -->
   <div class="bottom-dock">
     <button class="dock-pill active" id="dock-india">🇮🇳 India (Official SOI)</button>
-    <button class="dock-pill" id="dock-sun">☀️ Subsolar Zenith</button>
+    <button class="dock-pill" id="dock-istanbul">🇹🇷 Istanbul (13°C)</button>
     <button class="dock-pill" id="dock-himalayas">🏔️ Himalayas & Siachen</button>
+    <button class="dock-pill" id="dock-sun">☀️ Subsolar Zenith</button>
     <button class="dock-pill" id="dock-global">🌐 Prime Meridian (0°)</button>
     <button class="dock-pill" id="dock-americas">🌎 Americas</button>
     <button class="dock-pill" id="dock-asia">🌏 Asia-Pacific</button>
@@ -719,6 +998,13 @@ def generate_satellite_html():
   <script>
     (function() {{
       const MODIS_DATE = "{today_utc}";
+      const IANA_BY_ISO = {iana_json};
+      const IANA_BY_NAME = {{
+        'France': 'Europe/Paris',
+        'Norway': 'Europe/Oslo',
+        'Kosovo': 'Europe/Belgrade',
+        'Indian Ocean Territories': 'Indian/Chagos'
+      }};
 
       // 1. Initialize Leaflet Map
       // Centered on India with SOI boundary view
@@ -726,9 +1012,10 @@ def generate_satellite_html():
         center: [22.0, 78.5],
         zoom: 4,
         minZoom: 2,
-        maxZoom: 18,
+        maxZoom: 19,
         worldCopyJump: true,
-        zoomControl: false
+        zoomControl: false,
+        bounceAtZoomLimits: false
       }});
 
       L.control.zoom({{ position: 'topright' }}).addTo(map);
@@ -745,30 +1032,67 @@ def generate_satellite_html():
       map.getPane('nightLightsPane').style.pointerEvents = 'none';
       map.getPane('nightLightsPane').style.mixBlendMode = 'screen';
 
-      // 2. Base Tile Layers (NASA GIBS WMTS, ESRI, OpenTopoMap)
+      // 3) snowCoverPane (z-index 415) for NASA NDSI Snow Cover
+      map.createPane('snowCoverPane');
+      map.getPane('snowCoverPane').style.zIndex = 415;
+      map.getPane('snowCoverPane').style.pointerEvents = 'none';
+
+      // 4) weatherRadarPane (z-index 420) for RainViewer Radar
+      map.createPane('weatherRadarPane');
+      map.getPane('weatherRadarPane').style.zIndex = 420;
+      map.getPane('weatherRadarPane').style.pointerEvents = 'none';
+
+      // 5) googleRoadsPane (z-index 430) for Google Roads & City Labels
+      map.createPane('googleRoadsPane');
+      map.getPane('googleRoadsPane').style.zIndex = 430;
+      map.getPane('googleRoadsPane').style.pointerEvents = 'none';
+
+      const tileOpts = {{ noWrap: false, keepBuffer: 6, crossOrigin: false }};
+
+      // 2. Base Tile Layers (NASA GIBS WMTS, Google Maps, ESRI, OpenTopoMap)
       const baseLayers = {{
         bluemarble: L.tileLayer('https://gibs-{{s}}.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/default/GoogleMapsCompatible_Level8/{{z}}/{{y}}/{{x}}.jpeg', {{
           subdomains: 'abc',
-          maxZoom: 8,
-          attribution: 'Imagery © NASA Earthdata GIBS (Blue Marble)'
+          maxNativeZoom: 8,
+          maxZoom: 19,
+          attribution: 'Imagery © NASA Earthdata GIBS (Blue Marble)',
+          ...tileOpts
+        }}),
+        googlehybrid: L.tileLayer('https://mt{{s}}.google.com/vt/lyrs=y&x={{x}}&y={{y}}&z={{z}}', {{
+          subdomains: '0123',
+          maxZoom: 20,
+          attribution: 'Satellite & Map data © Google',
+          ...tileOpts
+        }}),
+        googleroads: L.tileLayer('https://mt{{s}}.google.com/vt/lyrs=m&x={{x}}&y={{y}}&z={{z}}', {{
+          subdomains: '0123',
+          maxZoom: 20,
+          attribution: 'Road Map © Google',
+          ...tileOpts
         }}),
         modis: L.tileLayer('https://gibs-{{s}}.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/' + MODIS_DATE + '/GoogleMapsCompatible_Level9/{{z}}/{{y}}/{{x}}.jpg', {{
           subdomains: 'abc',
-          maxZoom: 9,
-          attribution: 'Daily Satellite Pass © NASA Terra / MODIS (' + MODIS_DATE + ')'
+          maxNativeZoom: 9,
+          maxZoom: 19,
+          attribution: 'Daily Satellite Pass © NASA Terra / MODIS (' + MODIS_DATE + ')',
+          ...tileOpts
         }}),
         blackmarble: L.tileLayer('https://gibs-{{s}}.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/default/default/GoogleMapsCompatible_Level8/{{z}}/{{y}}/{{x}}.png', {{
           subdomains: 'abc',
-          maxZoom: 8,
-          attribution: 'Night Lights © NASA Suomi NPP / VIIRS Black Marble'
+          maxNativeZoom: 8,
+          maxZoom: 19,
+          attribution: 'Night Lights © NASA Suomi NPP / VIIRS Black Marble',
+          ...tileOpts
         }}),
         opentopo: L.tileLayer('https://{{s}}.tile.opentopomap.org/{{z}}/{{x}}/{{y}}.png', {{
           maxZoom: 17,
-          attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)'
+          attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)',
+          ...tileOpts
         }}),
         esri: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}', {{
           maxZoom: 19,
-          attribution: 'High-Res Satellite © Esri, Maxar, Earthstar Geographics'
+          attribution: 'High-Res Satellite © Esri, Maxar, Earthstar Geographics',
+          ...tileOpts
         }})
       }};
 
@@ -780,14 +1104,65 @@ def generate_satellite_html():
       // Night Lights Screen Overlay for Day/Night Composite
       const nightLightsOverlay = L.tileLayer('https://gibs-{{s}}.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/default/default/GoogleMapsCompatible_Level8/{{z}}/{{y}}/{{x}}.png', {{
         subdomains: 'abc',
-        maxZoom: 8,
+        maxNativeZoom: 8,
+        maxZoom: 19,
         pane: 'nightLightsPane',
         opacity: 0.85,
-        attribution: 'Night Lights: NASA VIIRS'
+        attribution: 'Night Lights: NASA VIIRS',
+        ...tileOpts
       }});
       nightLightsOverlay.addTo(map);
 
-      // 3. Astronomical Solar Terminator Calculations
+      // 3. Google Roads & Place Labels Overlay (Roads, highways, streets, cities that appear as you zoom in)
+      const googleRoadsOverlay = L.tileLayer('https://mt{{s}}.google.com/vt/lyrs=h&x={{x}}&y={{y}}&z={{z}}', {{
+        subdomains: '0123',
+        maxZoom: 20,
+        pane: 'googleRoadsPane',
+        opacity: 0.95,
+        attribution: 'Roads & Places: Google Maps',
+        ...tileOpts
+      }});
+      googleRoadsOverlay.addTo(map);
+
+      // 4. NASA NDSI Daily Snow & Ice Cover Layer
+      const snowCoverLayer = L.tileLayer('https://gibs-{{s}}.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_NDSI_Snow_Cover/default/' + MODIS_DATE + '/GoogleMapsCompatible_Level8/{{z}}/{{y}}/{{x}}.png', {{
+        subdomains: 'abc',
+        maxNativeZoom: 8,
+        maxZoom: 19,
+        pane: 'snowCoverPane',
+        opacity: 0.75,
+        attribution: 'Snow & Ice Cover © NASA Terra / MODIS NDSI (' + MODIS_DATE + ')',
+        ...tileOpts
+      }});
+      snowCoverLayer.addTo(map);
+
+      // 5. RainViewer Live Weather Radar (Precipitation & Snow)
+      let radarLayer = null;
+      async function loadRainViewerRadar() {{
+        try {{
+          const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+          const data = await res.json();
+          if (data && data.radar && data.radar.past && data.radar.past.length > 0) {{
+            const last = data.radar.past[data.radar.past.length - 1];
+            const radarUrl = data.host + last.path + '/256/{{z}}/{{x}}/{{y}}/2/1_1.png';
+            if (radarLayer && map.hasLayer(radarLayer)) map.removeLayer(radarLayer);
+            radarLayer = L.tileLayer(radarUrl, {{
+              opacity: 0.75,
+              pane: 'weatherRadarPane',
+              attribution: 'Live Weather Radar © RainViewer',
+              ...tileOpts
+            }});
+            if (document.getElementById('chk-radar').checked) {{
+              radarLayer.addTo(map);
+            }}
+          }}
+        }} catch (err) {{
+          console.warn('RainViewer Radar API not reachable:', err);
+        }}
+      }}
+      loadRainViewerRadar();
+
+      // 6. Astronomical Solar Terminator Calculations
       const rad = Math.PI / 180;
 
       function getSolarCoordinates(date) {{
@@ -819,34 +1194,27 @@ def generate_satellite_html():
         return {{ lat: dec, lon: lon0 }};
       }}
 
-      function computeTerminatorPolygon(solar) {{
-        const dec = solar.lat;
-        const lon0 = solar.lon;
-        const tanDec = Math.tan(dec * rad);
+      function terminatorLatAt(solar, lon) {{
+        const tanDec = Math.tan(solar.lat * rad);
+        if (Math.abs(tanDec) < 1e-6) return 0;
+        const lat = Math.atan(-Math.cos((lon - solar.lon) * rad) / tanDec) / rad;
+        return Math.max(-85.05, Math.min(85.05, lat));
+      }}
 
+      function computeMultiWorldTerminator(solar, westLon, eastLon) {{
+        const step = 2;
+        const startLon = Math.floor(westLon / step) * step;
+        const endLon = Math.ceil(eastLon / step) * step;
         const terminatorPoints = [];
-        const step = 2; // degrees for smooth curve
-        for (let lon = -180; lon <= 180; lon += step) {{
-          let dLon = (lon - lon0) * rad;
-          let lat = 0;
-          if (Math.abs(tanDec) < 1e-6) {{
-            lat = 0;
-          }} else {{
-            lat = Math.atan(-Math.cos(dLon) / tanDec) / rad;
-          }}
-          // Clamp latitude to Web Mercator bounds (85.05 deg)
-          lat = Math.max(-85.05, Math.min(85.05, lat));
-          terminatorPoints.push([lat, lon]);
+
+        for (let lon = startLon; lon <= endLon; lon += step) {{
+          terminatorPoints.push([terminatorLatAt(solar, lon), lon]);
         }}
 
-        // Determine which pole is in darkness
-        // If dec > 0 (Northern summer), North pole is in daylight, South pole is in night.
-        // If dec < 0 (Northern winter), South pole is in daylight, North pole is in night.
-        const darkPoleLat = dec >= 0 ? -85.05 : 85.05;
-
+        const darkPoleLat = solar.lat >= 0 ? -85.05 : 85.05;
         const polyCoords = [...terminatorPoints];
-        polyCoords.push([darkPoleLat, 180]);
-        polyCoords.push([darkPoleLat, -180]);
+        polyCoords.push([darkPoleLat, endLon]);
+        polyCoords.push([darkPoleLat, startLon]);
         polyCoords.push(terminatorPoints[0]);
 
         return polyCoords;
@@ -858,9 +1226,11 @@ def generate_satellite_html():
 
       function updateTerminator(date) {{
         const solar = getSolarCoordinates(date);
-        const polyCoords = computeTerminatorPolygon(solar);
+        const bounds = map.getBounds();
+        const west = Math.min(-180, bounds.getWest() - 360);
+        const east = Math.max(180, bounds.getEast() + 360);
+        const polyCoords = computeMultiWorldTerminator(solar, west, east);
 
-        // Update or create night polygon
         if (!nightPolygon) {{
           nightPolygon = L.polygon(polyCoords, {{
             pane: 'nightShadowPane',
@@ -881,7 +1251,12 @@ def generate_satellite_html():
 
         // Update Subsolar Marker
         const sunLat = solar.lat;
-        const sunLon = solar.lon;
+        let mapCenterLon = map.getCenter().lng;
+        let sunLon = ((solar.lon - mapCenterLon) % 360);
+        if (sunLon < -180) sunLon += 360;
+        if (sunLon > 180) sunLon -= 360;
+        sunLon += mapCenterLon;
+
         const sunIcon = L.divIcon({{
           className: 'subsolar-marker-wrap',
           html: '<div class="subsolar-marker">☀️</div>',
@@ -896,7 +1271,7 @@ def generate_satellite_html():
               <strong style="color: #f59e0b;">☀️ Subsolar Point (Zenith)</strong><br>
               The Sun is directly overhead at 90° elevation.<br>
               <strong>Latitude:</strong> ${{sunLat.toFixed(2)}}° (${{sunLat >= 0 ? 'N' : 'S'}})<br>
-              <strong>Longitude:</strong> ${{sunLon.toFixed(2)}}° (${{sunLon >= 0 ? 'E' : 'W'}})<br>
+              <strong>Longitude:</strong> ${{solar.lon.toFixed(2)}}° (${{solar.lon >= 0 ? 'E' : 'W'}})<br>
               <em style="color: #94a3b8; font-size: 10.5px;">Local Solar Noon</em>
             </div>
           `);
@@ -911,17 +1286,16 @@ def generate_satellite_html():
         const pad = (n) => String(n).padStart(2, '0');
         const utcStr = `${{pad(date.getUTCHours())}}:${{pad(date.getUTCMinutes())}}:${{pad(date.getUTCSeconds())}} UTC`;
 
-        // IST is UTC + 5h 30m
         const istDate = new Date(date.getTime() + (5.5 * 3600 * 1000));
         const istStr = `${{pad(istDate.getUTCHours())}}:${{pad(istDate.getUTCMinutes())}}:${{pad(istDate.getUTCSeconds())}} IST`;
 
         document.getElementById('time-utc').textContent = utcStr;
         document.getElementById('time-ist').textContent = istStr;
         document.getElementById('subsolar-coords').textContent =
-          `Lat: ${{Math.abs(sunLat).toFixed(1)}}°${{sunLat >= 0 ? 'N' : 'S'}}, Lon: ${{Math.abs(sunLon).toFixed(1)}}°${{sunLon >= 0 ? 'E' : 'W'}}`;
+          `Lat: ${{Math.abs(sunLat).toFixed(1)}}°${{sunLat >= 0 ? 'N' : 'S'}}, Lon: ${{Math.abs(solar.lon).toFixed(1)}}°${{solar.lon >= 0 ? 'E' : 'W'}}`;
       }}
 
-      // 4. Live Clock & Scrubber Loop
+      // 7. Live Clock & Scrubber Loop
       let isPlaying = false;
       let playTimer = null;
       let scrubOffsetMinutes = 0;
@@ -940,6 +1314,10 @@ def generate_satellite_html():
 
       setInterval(tick, 1000);
       tick();
+
+      map.on('move', () => {{
+        updateTerminator(getCurrentSimDate());
+      }});
 
       // Scrubber Interaction
       const scrubber = document.getElementById('time-scrubber');
@@ -984,7 +1362,7 @@ def generate_satellite_html():
       }}
       btnPlay.addEventListener('click', togglePlay);
 
-      // 5. Basemap Switcher
+      // 8. Basemap Switcher
       const pillButtons = document.querySelectorAll('.pill-btn');
       pillButtons.forEach(btn => {{
         btn.addEventListener('click', () => {{
@@ -993,7 +1371,6 @@ def generate_satellite_html():
           const layerKey = btn.dataset.layer;
           currentBaseKey = layerKey;
 
-          // Remove existing base layer
           if (activeBaseLayer && map.hasLayer(activeBaseLayer)) {{
             map.removeLayer(activeBaseLayer);
           }}
@@ -1020,17 +1397,221 @@ def generate_satellite_html():
         }});
       }});
 
-      // 6. Vector Layers: Survey of India, World Borders & Disputed Borders
+      // 9. Weather Helper & Icon Decoder (WMO Standard)
+      function decodeWeather(code, isDay) {{
+        switch (code) {{
+          case 0: return {{ icon: isDay ? '☀️' : '🌙', desc: 'Clear sky' }};
+          case 1: return {{ icon: isDay ? '🌤️' : '🌤️', desc: 'Mainly clear' }};
+          case 2: return {{ icon: isDay ? '⛅' : '⛅', desc: 'Partly cloudy' }};
+          case 3: return {{ icon: '☁️', desc: 'Overcast' }};
+          case 45:
+          case 48: return {{ icon: '🌫️', desc: 'Foggy' }};
+          case 51:
+          case 53:
+          case 55: return {{ icon: '🌧️', desc: 'Drizzle' }};
+          case 61:
+          case 63:
+          case 65: return {{ icon: '🌧️', desc: 'Rain' }};
+          case 71:
+          case 73:
+          case 75: return {{ icon: '❄️', desc: 'Snowfall' }};
+          case 77: return {{ icon: '❄️', desc: 'Snow grains' }};
+          case 80:
+          case 81:
+          case 82: return {{ icon: '🌦️', desc: 'Rain showers' }};
+          case 85:
+          case 86: return {{ icon: '🌨️', desc: 'Snow showers' }};
+          case 95:
+          case 96:
+          case 99: return {{ icon: '⛈️', desc: 'Thunderstorm' }};
+          default: return {{ icon: isDay ? '☀️' : '🌙', desc: 'Fair' }};
+        }}
+      }}
+
+      function getTempClass(temp) {{
+        if (temp <= 0) return 'temp-freeze';
+        if (temp <= 12) return 'temp-cold';
+        if (temp <= 20) return 'temp-mild';
+        if (temp <= 30) return 'temp-warm';
+        return 'temp-hot';
+      }}
+
+      // 10. Global & Indian City Weather Badges Layer
+      const CITIES_WEATHER = [
+        {{ name: 'Istanbul', lat: 41.0082, lon: 28.9784 }},
+        {{ name: 'New Delhi', lat: 28.6139, lon: 77.2090 }},
+        {{ name: 'Mumbai', lat: 19.0760, lon: 72.8777 }},
+        {{ name: 'Bengaluru', lat: 12.9716, lon: 77.5946 }},
+        {{ name: 'Kolkata', lat: 22.5726, lon: 88.3639 }},
+        {{ name: 'Chennai', lat: 13.0827, lon: 80.2707 }},
+        {{ name: 'Srinagar', lat: 34.0837, lon: 74.7973 }},
+        {{ name: 'Leh', lat: 34.1526, lon: 77.5771 }},
+        {{ name: 'Shimla', lat: 31.1048, lon: 77.1734 }},
+        {{ name: 'London', lat: 51.5074, lon: -0.1278 }},
+        {{ name: 'Paris', lat: 48.8566, lon: 2.3522 }},
+        {{ name: 'Berlin', lat: 52.5200, lon: 13.4050 }},
+        {{ name: 'Rome', lat: 41.9028, lon: 12.4964 }},
+        {{ name: 'Madrid', lat: 40.4168, lon: -3.7038 }},
+        {{ name: 'Moscow', lat: 55.7558, lon: 37.6173 }},
+        {{ name: 'Athens', lat: 37.9838, lon: 23.7275 }},
+        {{ name: 'Cairo', lat: 30.0444, lon: 31.2357 }},
+        {{ name: 'Dubai', lat: 25.2048, lon: 55.2708 }},
+        {{ name: 'Riyadh', lat: 24.7136, lon: 46.6753 }},
+        {{ name: 'Tokyo', lat: 35.6762, lon: 139.6503 }},
+        {{ name: 'Beijing', lat: 39.9042, lon: 116.4074 }},
+        {{ name: 'Shanghai', lat: 31.2304, lon: 121.4737 }},
+        {{ name: 'Seoul', lat: 37.5665, lon: 126.9780 }},
+        {{ name: 'Singapore', lat: 1.3521, lon: 103.8198 }},
+        {{ name: 'Bangkok', lat: 13.7563, lon: 100.5018 }},
+        {{ name: 'New York', lat: 40.7128, lon: -74.0060 }},
+        {{ name: 'Los Angeles', lat: 34.0522, lon: -118.2437 }},
+        {{ name: 'Chicago', lat: 41.8781, lon: -87.6298 }},
+        {{ name: 'Toronto', lat: 43.6532, lon: -79.3832 }},
+        {{ name: 'Anchorage', lat: 61.2181, lon: -149.9003 }},
+        {{ name: 'Zurich', lat: 47.3769, lon: 8.5417 }},
+        {{ name: 'Oslo', lat: 59.9139, lon: 10.7522 }},
+        {{ name: 'Sydney', lat: -33.8688, lon: 151.2093 }},
+        {{ name: 'Melbourne', lat: -37.8136, lon: 144.9631 }},
+        {{ name: 'Buenos Aires', lat: -34.6037, lon: -58.3816 }},
+        {{ name: 'São Paulo', lat: -23.5505, lon: -46.6333 }},
+        {{ name: 'Cape Town', lat: -33.9249, lon: 18.4241 }},
+        {{ name: 'Nairobi', lat: -1.2921, lon: 36.8219 }}
+      ];
+
+      const cityWeatherGroup = L.layerGroup();
+
+      async function fetchCityWeather() {{
+        try {{
+          const lats = CITIES_WEATHER.map(c => c.lat).join(',');
+          const lons = CITIES_WEATHER.map(c => c.lon).join(',');
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${{lats}}&longitude=${{lons}}&current=temperature_2m,apparent_temperature,precipitation,weather_code,snow_depth,snowfall,wind_speed_10m,is_day`;
+
+          const res = await fetch(url);
+          const dataList = await res.json();
+          if (!Array.isArray(dataList)) return;
+
+          cityWeatherGroup.clearLayers();
+
+          dataList.forEach((data, i) => {{
+            const city = CITIES_WEATHER[i];
+            const curr = data.current;
+            const temp = Math.round(curr.temperature_2m);
+            const feels = Math.round(curr.apparent_temperature);
+            const w = decodeWeather(curr.weather_code, curr.is_day);
+            const tempClass = getTempClass(temp);
+            const hasSnow = curr.snow_depth > 0 || curr.snowfall > 0;
+            const snowCm = (curr.snow_depth * 100).toFixed(0);
+
+            const badgeHtml = `
+              <div class="weather-badge ${{tempClass}}">
+                <span>${{w.icon}}</span>
+                <span class="w-temp">${{temp}}°C</span>
+                <span>${{city.name}}</span>
+                ${{hasSnow ? `<span class="w-snow-pill">❄️ ${{snowCm > 0 ? snowCm + 'cm' : 'snow'}}</span>` : ''}}
+              </div>
+            `;
+
+            const icon = L.divIcon({{
+              className: 'weather-badge-wrap',
+              html: badgeHtml,
+              iconSize: [0, 0],
+              iconAnchor: [0, 0]
+            }});
+
+            const marker = L.marker([city.lat, city.lon], {{ icon }});
+            marker.bindPopup(`
+              <div class="weather-popup-card">
+                <div class="w-header">
+                  <span class="w-city-title">📍 ${{city.name}}</span>
+                  <span style="font-size: 10px; color: var(--text-muted);">${{w.desc}}</span>
+                </div>
+                <div class="w-main-temp">
+                  <span>${{w.icon}}</span>
+                  <span>${{temp}}°C</span>
+                  <span style="font-size: 12px; font-weight: 500; color: #94a3b8; margin-left: 6px;">Feels ${{feels}}°C</span>
+                </div>
+                ${{hasSnow ? `<div style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; border-radius: 6px; padding: 4px 8px; font-size: 11px; color: #e0f2fe; margin: 4px 0;">❄️ Snow cover depth: <strong>${{snowCm}} cm</strong></div>` : ''}}
+                <div class="w-grid">
+                  <div class="w-grid-item">💧 Humidity: <strong>${{curr.relative_humidity_2m || 75}}%</strong></div>
+                  <div class="w-grid-item">💨 Wind: <strong>${{curr.wind_speed_10m}} km/h</strong></div>
+                  <div class="w-grid-item">🌧️ Rain: <strong>${{curr.precipitation}} mm</strong></div>
+                  <div class="w-grid-item">❄️ Snowfall: <strong>${{curr.snowfall}} cm</strong></div>
+                </div>
+              </div>
+            `);
+
+            marker.addTo(cityWeatherGroup);
+          }});
+
+          if (document.getElementById('chk-weather-cities').checked) {{
+            cityWeatherGroup.addTo(map);
+          }}
+        }} catch (err) {{
+          console.warn('Open-Meteo batch weather fetch error:', err);
+        }}
+      }}
+
+      fetchCityWeather();
+      // Refresh city weather every 10 minutes
+      setInterval(fetchCityWeather, 10 * 60 * 1000);
+
+      // 11. Interactive Click-to-Inspect Live Weather Anywhere
+      map.on('click', async (e) => {{
+        const lat = e.latlng.lat;
+        let normLon = ((e.latlng.lng + 180) % 360) - 180;
+        if (normLon < -180) normLon += 360;
+
+        const popup = L.popup()
+          .setLatLng(e.latlng)
+          .setContent('<div style="font-size: 12px; color: #94a3b8; padding: 6px;">📡 Fetching live weather & snow conditions...</div>')
+          .openOn(map);
+
+        try {{
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${{lat.toFixed(4)}}&longitude=${{normLon.toFixed(4)}}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,snow_depth,snowfall,wind_speed_10m,is_day`;
+          const res = await fetch(url);
+          const data = await res.json();
+          const curr = data.current;
+          const temp = Math.round(curr.temperature_2m);
+          const feels = Math.round(curr.apparent_temperature);
+          const w = decodeWeather(curr.weather_code, curr.is_day);
+          const hasSnow = curr.snow_depth > 0 || curr.snowfall > 0;
+          const snowCm = (curr.snow_depth * 100).toFixed(1);
+
+          popup.setContent(`
+            <div class="weather-popup-card">
+              <div class="w-header">
+                <span class="w-city-title">📍 ${{Math.abs(lat).toFixed(2)}}°${{lat >= 0 ? 'N' : 'S'}}, ${{Math.abs(normLon).toFixed(2)}}°${{normLon >= 0 ? 'E' : 'W'}}</span>
+                <span style="font-size: 10px; color: var(--text-muted);">${{w.desc}}</span>
+              </div>
+              <div class="w-main-temp">
+                <span>${{w.icon}}</span>
+                <span>${{temp}}°C</span>
+                <span style="font-size: 12px; font-weight: 500; color: #94a3b8; margin-left: 6px;">Feels ${{feels}}°C</span>
+              </div>
+              ${{hasSnow ? `<div style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; border-radius: 6px; padding: 4px 8px; font-size: 11px; color: #e0f2fe; margin: 4px 0;">❄️ Snow cover depth: <strong>${{snowCm}} cm</strong></div>` : ''}}
+              <div class="w-grid">
+                <div class="w-grid-item">💧 Humidity: <strong>${{curr.relative_humidity_2m}}%</strong></div>
+                <div class="w-grid-item">💨 Wind: <strong>${{curr.wind_speed_10m}} km/h</strong></div>
+                <div class="w-grid-item">🌧️ Rain: <strong>${{curr.precipitation}} mm</strong></div>
+                <div class="w-grid-item">❄️ Snowfall: <strong>${{curr.snowfall}} cm</strong></div>
+              </div>
+            </div>
+          `);
+        }} catch (err) {{
+          popup.setContent('<div style="font-size: 11.5px; color: #ef4444; padding: 4px;">Weather data currently unavailable for this point.</div>');
+        }}
+      }});
+
+      // 12. Vector Layers: Survey of India, World Borders & Disputed Borders
       let soiLayer = null;
       let worldBordersLayer = null;
       let disputedLayer = null;
       let graticuleLayer = null;
       let labelMarkers = [];
 
-      // Find India Feature in WORLD_DATA
       const indiaFeature = WORLD_DATA.features.find(f => f.properties && f.properties.name === 'India');
 
-      // 6a. Survey of India (SOI) Layer
+      // 12a. Survey of India (SOI) Layer
       if (indiaFeature) {{
         soiLayer = L.geoJSON(indiaFeature, {{
           style: {{
@@ -1054,7 +1635,7 @@ def generate_satellite_html():
         }}).addTo(map);
       }}
 
-      // 6b. Disputed Borders (Light Dashed Line: Serbia-Kosovo, Morocco-SADR, Bir Tawil)
+      // 12b. Disputed Borders (Light Dashed Line: Serbia-Kosovo, Morocco-SADR, Bir Tawil)
       if (WORLD_DATA.dashed_borders) {{
         disputedLayer = L.geoJSON(WORLD_DATA.dashed_borders, {{
           style: {{
@@ -1075,7 +1656,7 @@ def generate_satellite_html():
         }}).addTo(map);
       }}
 
-      // 6c. World Country Boundaries
+      // 12c. World Country Boundaries
       const otherCountries = WORLD_DATA.features.filter(f => f.properties && f.properties.name !== 'India');
       worldBordersLayer = L.geoJSON(otherCountries, {{
         style: {{
@@ -1098,21 +1679,19 @@ def generate_satellite_html():
         }}
       }}).addTo(map);
 
-      // 6d. Graticule Lines (Parallels & Meridians)
+      // 12d. Graticule Lines (Parallels & Meridians)
       function createGraticuleLayer() {{
         const gratGroup = L.layerGroup();
         const gratStyle = {{ color: '#94a3b8', weight: 0.65, opacity: 0.45, dashArray: '2, 3' }};
         const majorGratStyle = {{ color: '#38bdf8', weight: 1.0, opacity: 0.65 }};
 
-        // Parallels (-80 to 80 step 20)
         for (let lat = -80; lat <= 80; lat += 20) {{
           const isEquator = (lat === 0);
-          L.polyline([[lat, -180], [lat, 180]], isEquator ? majorGratStyle : gratStyle).addTo(gratGroup);
+          L.polyline([[lat, -540], [lat, 540]], isEquator ? majorGratStyle : gratStyle).addTo(gratGroup);
         }}
 
-        // Meridians (-180 to 180 step 30)
-        for (let lon = -180; lon <= 180; lon += 30) {{
-          const isPrime = (lon === 0);
+        for (let lon = -540; lon <= 540; lon += 30) {{
+          const isPrime = (((lon % 360) + 360) % 360 === 0);
           L.polyline([[-85, lon], [85, lon]], isPrime ? majorGratStyle : gratStyle).addTo(gratGroup);
         }}
 
@@ -1122,7 +1701,7 @@ def generate_satellite_html():
       graticuleLayer = createGraticuleLayer();
       graticuleLayer.addTo(map);
 
-      // 6e. Country Labels (Bold, Google Maps Format)
+      // 12e. Country Labels (Bold, Google Maps Format)
       function updateLabels() {{
         labelMarkers.forEach(m => map.removeLayer(m));
         labelMarkers = [];
@@ -1151,8 +1730,8 @@ def generate_satellite_html():
           const labelIcon = L.divIcon({{
             className: 'country-label-wrapper',
             html: `<div class="country-label-marker" style="font-size: ${{fontSize}}; font-weight: ${{fontWeight}}; color: ${{fontColor}};">${{props.name}}</div>`,
-            iconSize: [100, 20],
-            iconAnchor: [50, 10]
+            iconSize: [0, 0],
+            iconAnchor: [0, 0]
           }});
 
           const marker = L.marker([lat, lon], {{ icon: labelIcon, interactive: false }});
@@ -1165,6 +1744,39 @@ def generate_satellite_html():
       updateLabels();
 
       // Checkbox Toggles
+      document.getElementById('chk-roads').addEventListener('change', (e) => {{
+        if (e.target.checked) {{
+          googleRoadsOverlay.addTo(map);
+        }} else {{
+          map.removeLayer(googleRoadsOverlay);
+        }}
+      }});
+
+      document.getElementById('chk-snow').addEventListener('change', (e) => {{
+        if (e.target.checked) {{
+          snowCoverLayer.addTo(map);
+        }} else {{
+          map.removeLayer(snowCoverLayer);
+        }}
+      }});
+
+      document.getElementById('chk-weather-cities').addEventListener('change', (e) => {{
+        if (e.target.checked) {{
+          cityWeatherGroup.addTo(map);
+        }} else {{
+          map.removeLayer(cityWeatherGroup);
+        }}
+      }});
+
+      document.getElementById('chk-radar').addEventListener('change', (e) => {{
+        if (e.target.checked) {{
+          if (radarLayer) radarLayer.addTo(map);
+          else loadRainViewerRadar();
+        }} else {{
+          if (radarLayer) map.removeLayer(radarLayer);
+        }}
+      }});
+
       document.getElementById('chk-soi').addEventListener('change', (e) => {{
         if (e.target.checked) {{
           if (soiLayer) soiLayer.addTo(map);
@@ -1207,7 +1819,7 @@ def generate_satellite_html():
         }}
       }});
 
-      // 7. Search & Auto-complete
+      // 13. Search & Auto-complete
       const searchInput = document.getElementById('country-search');
       const dataList = document.getElementById('country-list');
 
@@ -1227,12 +1839,19 @@ def generate_satellite_html():
         }}
       }});
 
-      // 8. Dock & Quick Navigation Shortcuts
+      // 14. Dock & Quick Navigation Shortcuts
       document.getElementById('dock-india').addEventListener('click', () => {{
         map.flyTo([22.0, 78.5], 5, {{ duration: 1.2 }});
       }});
       document.getElementById('btn-fly-india').addEventListener('click', () => {{
         map.flyTo([22.0, 78.5], 5, {{ duration: 1.2 }});
+      }});
+
+      document.getElementById('dock-istanbul').addEventListener('click', () => {{
+        map.flyTo([41.0082, 28.9784], 7, {{ duration: 1.5 }});
+      }});
+      document.getElementById('btn-fly-istanbul').addEventListener('click', () => {{
+        map.flyTo([41.0082, 28.9784], 7, {{ duration: 1.5 }});
       }});
 
       document.getElementById('dock-sun').addEventListener('click', () => {{
@@ -1263,7 +1882,7 @@ def generate_satellite_html():
         map.flyTo([25.0, 20.0], 3, {{ duration: 1.2 }});
       }});
 
-      // 9. Mobile Controls Toggle
+      // 15. Mobile Controls Toggle
       const mobileToggleBtn = document.getElementById('mobile-toggle-btn');
       const controlsPanel = document.getElementById('controls-panel');
       const chevron = document.getElementById('chevron');

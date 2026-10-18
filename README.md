@@ -74,11 +74,15 @@ A dedicated standalone view mode (`satellite_day_night.html`) integrating author
   - **Live Digital Clocks**: Displays synchronized **UTC** and **IST (Indian Standard Time, UTC+5:30)**.
   - **24-Hour Time Scrubber**: Scrub through 24 hours to watch the sunrise over the Bay of Bengal, midday over New Delhi, and sunset over Mumbai.
   - **Animated 24h Loop**: Automatically animate the Earth's diurnal rotation.
-- **🌍 NASA Blue Marble**: Shaded relief topography, land cover, and ocean bathymetry from NASA Earthdata GIBS.
-- **🛰️ NASA MODIS Terra TrueColor**: Daily real-time satellite pass showing atmospheric dynamics, snow cover, and seasonal foliage.
-- **🌃 NASA Black Marble (VIIRS Earth at Night)**: Nighttime city lights and human settlements blended with screen blending over nocturnal Earth.
-- **🏔️ OpenTopoMap**: High-detail topographic elevation contours and terrain relief.
-- **🛰️ ESRI High-Resolution Satellite**: 50cm global aerial and satellite imagery.
+- **❄️ NASA Daily Snow & Ice Cover Layer**:
+  - Live satellite snow cover from NASA Terra MODIS NDSI mapping real-time snow cover across the Himalayas, Alps, Rockies, Siberia, Scandinavia, and polar ice sheets.
+- **🌡️ Live World & City Weather Layer**:
+  - Real-time live temperatures, feels-like, and weather conditions across 38+ major global and Indian cities (e.g. Istanbul ~13°C, New Delhi ~22°C, London ~11°C, Srinagar ~9°C with snow indicators).
+  - **Click-to-Inspect Weather Anywhere**: Click anywhere on the map to fetch instant live temperature, humidity, wind speed, precipitation, and snow depth in cm.
+- **🌧️ Live Rain & Snow Radar**: Real-time precipitation radar layer from RainViewer showing live storm and snow movement.
+- **🛣️ Google Maps Hybrid & Roads Overlay**:
+  - Seamless Google Maps roads, highways, street names, airports, and city labels that dynamically reveal as you zoom into any place on Earth.
+  - Basemaps include **Google Hybrid**, **Google Streets**, **NASA Blue Marble**, **MODIS Daily Pass**, **Black Marble (Night Lights)**, **OpenTopoMap**, and **ESRI 50cm Satellite**.
 - **🇮🇳 Survey of India Sovereign Boundary Overlay**: Full SOI-compliant sovereign boundary of India (J&K, Ladakh, Aksai Chin, Siachen, Arunachal Pradesh) rendered as a gold vector layer.
 - **⚠️ Disputed Borders**: Serbia-Kosovo, Morocco-Western Sahara (SADR), and Bir Tawil rendered in Google Maps style light dashed lines.
 
