@@ -76,13 +76,14 @@ A dedicated standalone view mode (`satellite_day_night.html`) integrating author
   - **Animated 24h Loop**: Automatically animate the Earth's diurnal rotation.
 - **❄️ NASA Daily Snow & Ice Cover Layer**:
   - Live satellite snow cover from NASA Terra MODIS NDSI mapping real-time snow cover across the Himalayas, Alps, Rockies, Siberia, Scandinavia, and polar ice sheets.
-- **🌡️ Live World & City Weather Layer**:
-  - Real-time live temperatures, feels-like, and weather conditions across 38+ major global and Indian cities (e.g. Istanbul ~13°C, New Delhi ~22°C, London ~11°C, Srinagar ~9°C with snow indicators).
-  - **Click-to-Inspect Weather Anywhere**: Click anywhere on the map to fetch instant live temperature, humidity, wind speed, precipitation, and snow depth in cm.
-- **🌧️ Live Rain & Snow Radar**: Real-time precipitation radar layer from RainViewer showing live storm and snow movement.
-- **🛣️ Google Maps Hybrid & Roads Overlay**:
-  - Seamless Google Maps roads, highways, street names, airports, and city labels that dynamically reveal as you zoom into any place on Earth.
-  - Basemaps include **Google Hybrid**, **Google Streets**, **NASA Blue Marble**, **MODIS Daily Pass**, **Black Marble (Night Lights)**, **OpenTopoMap**, and **ESRI 50cm Satellite**.
+- **🌡️ Integrated Time & Live Climate Dashboard**:
+  - Automatically reflects the real-time temperature, condition, humidity, wind, and local time of the specific place visited (clicked on the map, searched, or selected via quick fly buttons).
+  - Visiting **Istanbul** reflects its live temperature (**~13°C**), condition, and local time (TRT, UTC+3).
+  - Visiting **New Delhi** reflects its live temperature (**~22°C**) and IST time (UTC+5:30).
+  - Visiting **Himalayas / Srinagar** reflects live temperature (**~9°C**) and snow depth.
+  - **Click-to-Inspect Anywhere**: Click anywhere on Earth to inspect live temperature and snow coverage at that exact latitude/longitude.
+- **🌍 Authoritative Spaceborne Satellite & Elevation Basemaps**:
+  - NASA Blue Marble, NASA MODIS Daily Pass, NASA Black Marble (Night Lights), OpenTopoMap, and ESRI 50cm Satellite.
 - **🇮🇳 Survey of India Sovereign Boundary Overlay**: Full SOI-compliant sovereign boundary of India (J&K, Ladakh, Aksai Chin, Siachen, Arunachal Pradesh) rendered as a gold vector layer.
 - **⚠️ Disputed Borders**: Serbia-Kosovo, Morocco-Western Sahara (SADR), and Bir Tawil rendered in Google Maps style light dashed lines.
 
