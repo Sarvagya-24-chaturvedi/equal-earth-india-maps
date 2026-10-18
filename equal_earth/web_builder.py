@@ -478,15 +478,17 @@ def build_interactive_html(
 
     /* Map Tooltip */
     .d3-tooltip {{
-      position: absolute;
-      background: #0f172a;
+      position: fixed !important;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
       color: #ffffff;
       padding: 6px 10px;
-      font-size: 12px;
+      font-size: 11.5px;
       border-radius: 6px;
       pointer-events: none;
-      z-index: 200;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      z-index: 9999;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(148, 163, 184, 0.25);
       display: none;
     }}
 
@@ -1170,6 +1172,9 @@ def build_interactive_html(
 
           // Scale-invariant label font-size & stroke so labels never get huge when zoomed in
           const k = transform.k;
+          currentZoomK = k;
+          updateLabelVisibility(k);
+
           gLabels.selectAll("text").style("font-size", function(d) {{
             const isCountry = d && d.properties && (d.properties.iso_a2 || d.properties.iso_a3);
             const isIndia = d && d.properties && d.properties.name === "India";
@@ -1238,6 +1243,45 @@ def build_interactive_html(
         return null;
       }}
 
+      // Country Tiers for Zoom-based uncluttered labelling
+      const LARGE_COUNTRIES = new Set([
+        "India", "Russia", "Canada", "United States of America", "United States", "China",
+        "Brazil", "Australia", "Kazakhstan", "Argentina", "Algeria",
+        "Democratic Republic of the Congo", "Saudi Arabia", "Mexico", "Indonesia",
+        "Sudan", "Libya", "Iran", "Mongolia", "Peru", "Chad", "Niger", "Angola", "Mali",
+        "South Africa", "Colombia", "Ethiopia", "Egypt", "Nigeria", "Greenland"
+      ]);
+
+      const MEDIUM_COUNTRIES = new Set([
+        "France", "Germany", "United Kingdom", "Spain", "Italy", "Turkey", "Ukraine",
+        "Poland", "Sweden", "Norway", "Finland", "Japan", "South Korea", "Thailand",
+        "Vietnam", "Philippines", "Pakistan", "Afghanistan", "Iraq", "Morocco",
+        "Tanzania", "Kenya", "Mozambique", "Zambia", "Namibia", "Botswana",
+        "Madagascar", "Chile", "Bolivia", "Venezuela", "Myanmar", "New Zealand",
+        "Uzbekistan", "Malaysia", "Yemen", "Oman", "Turkmenistan", "Zimbabwe", "Somalia",
+        "Central African Republic", "South Sudan", "Mauritania", "Cameroon", "Paraguay"
+      ]);
+
+      let currentZoomK = 1.0;
+
+      function updateLabelVisibility(k) {{
+        gLabels.selectAll("text.country-label").style("display", function(d) {{
+          if (!d || !d.properties) return "none";
+          const name = d.properties.name;
+          if (name === "India") return "inline";
+          if (k <= 2.2) {{
+            return LARGE_COUNTRIES.has(name) ? "inline" : "none";
+          }} else if (k <= 4.0) {{
+            return (LARGE_COUNTRIES.has(name) || MEDIUM_COUNTRIES.has(name)) ? "inline" : "none";
+          }} else {{
+            return "inline";
+          }}
+        }});
+
+        gLabels.selectAll("circle.micro-dot").style("display", k >= 2.8 ? "inline" : "none");
+        gLabels.selectAll("text.micro-label").style("display", k >= 4.2 ? "inline" : "none");
+      }}
+
       // Render Function
       function updateMap() {{
         const theme = THEMES[currentThemeKey];
@@ -1295,7 +1339,7 @@ def build_interactive_html(
               `);
             }})
             .on("mousemove", event => {{
-              tooltip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY + 12) + "px");
+              tooltip.style("left", (event.clientX + 10) + "px").style("top", (event.clientY + 10) + "px");
             }})
             .on("mouseleave", () => tooltip.style("display", "none"))
             .on("click", (event, d) => {{
@@ -1481,7 +1525,7 @@ def build_interactive_html(
                 `);
               }})
               .on("mousemove", event => {{
-                tooltip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY + 12) + "px");
+                tooltip.style("left", (event.clientX + 10) + "px").style("top", (event.clientY + 10) + "px");
               }})
               .on("mouseleave", () => tooltip.style("display", "none"))
               .on("click", (event, d) => {{
@@ -1521,7 +1565,7 @@ def build_interactive_html(
                 `);
               }})
               .on("mousemove", event => {{
-                tooltip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY + 12) + "px");
+                tooltip.style("left", (event.clientX + 10) + "px").style("top", (event.clientY + 10) + "px");
               }})
               .on("mouseleave", () => tooltip.style("display", "none"))
               .on("click", (event, d) => {{
@@ -1562,7 +1606,7 @@ def build_interactive_html(
                 `);
               }})
               .on("mousemove", event => {{
-                tooltip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY + 12) + "px");
+                tooltip.style("left", (event.clientX + 10) + "px").style("top", (event.clientY + 10) + "px");
               }})
               .on("mouseleave", () => tooltip.style("display", "none"))
               .on("click", (event, d) => {{
@@ -1598,13 +1642,16 @@ def build_interactive_html(
                 `);
               }})
               .on("mousemove", event => {{
-                tooltip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY + 12) + "px");
+                tooltip.style("left", (event.clientX + 10) + "px").style("top", (event.clientY + 10) + "px");
               }})
               .on("mouseleave", () => tooltip.style("display", "none"))
               .on("click", (event, d) => {{
                 if (d.properties && d.properties.wiki) window.open(d.properties.wiki, "_blank");
               }});
           }}
+
+          // Apply zoom-based hierarchical label filter
+          updateLabelVisibility(currentZoomK);
         }}
 
         // Update Inspector & Legend visibility (Auto-hidden in Global Earth mode)
