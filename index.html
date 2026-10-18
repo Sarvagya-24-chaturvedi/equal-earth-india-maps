@@ -559,6 +559,21 @@
         </label>
         
         <label class="checkbox-item">
+          <input type="checkbox" id="chk-country-labels" checked>
+          <span>Country Labels (Global Map)</span>
+        </label>
+        
+        <label class="checkbox-item">
+          <input type="checkbox" id="chk-micronations" checked>
+          <span>Micronations & Territories</span>
+        </label>
+        
+        <label class="checkbox-item">
+          <input type="checkbox" id="chk-ocean-labels" checked>
+          <span>Ocean Labels</span>
+        </label>
+        
+        <label class="checkbox-item">
           <input type="checkbox" id="chk-graticule" checked>
           <span>Graticule (Grid Lines)</span>
         </label>
@@ -868,13 +883,24 @@
             .attr("fill", d => (d.properties.name === "India") ? theme.indiaFill : theme.land)
             .attr("stroke", d => (d.properties.name === "India") ? theme.indiaEdge : theme.landEdge)
             .attr("stroke-width", d => (d.properties.name === "India") ? 0.8 : 0.4)
+            .style("cursor", d => (d.properties && d.properties.wiki) ? "pointer" : "default")
             .on("mouseenter", (event, d) => {
-              tooltip.style("display", "block").html(`<strong>${d.properties.name}</strong>`);
+              tooltip.style("display", "block").html(`
+                <div style="font-size: 12px; line-height: 1.4;">
+                  <strong>${d.properties.name}</strong>
+                  ${d.properties.wiki ? '<br><span style="font-size: 10px; color: #38bdf8;">Click to view Wikipedia article ↗</span>' : ''}
+                </div>
+              `);
             })
             .on("mousemove", event => {
               tooltip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY + 12) + "px");
             })
-            .on("mouseleave", () => tooltip.style("display", "none"));
+            .on("mouseleave", () => tooltip.style("display", "none"))
+            .on("click", (event, d) => {
+              if (d.properties && d.properties.wiki) {
+                window.open(d.properties.wiki, "_blank");
+              }
+            });
         }
 
         // Disputed Borders
@@ -930,6 +956,7 @@
             .attr("stroke-width", 0.6)
             .style("cursor", "pointer")
             .on("mouseenter", function(event, d) {
+              if (currentMode !== "india") return;
               d3.select(this).attr("stroke", "#0f172a").attr("stroke-width", 1.5);
               const stName = d.properties.ST_NM || d.properties.st_nm;
               const val = dataMap ? dataMap[stName] : null;
@@ -969,33 +996,199 @@
           }
         }
 
-        // State Centroid Labels
-        const showLabels = document.getElementById("chk-state-labels").checked;
-        gLabels.selectAll("text").remove();
-        if (showLabels && (currentMode === "india")) {
-          gLabels.selectAll("text")
-            .data(window.INDIA_STATES_DATA.features)
-            .enter()
-            .append("text")
-            .attr("transform", d => {
-              const p = projection(d.properties.centroid || d3.geoCentroid(d));
-              return `translate(${p[0]}, ${p[1]})`;
-            })
-            .text(d => d.properties.ST_NM || d.properties.st_nm)
-            .attr("text-anchor", "middle")
-            .attr("dominant-baseline", "central")
-            .attr("fill", theme.text)
-            .attr("font-size", "7.5px")
-            .attr("font-weight", "600")
-            .attr("paint-order", "stroke")
-            .attr("stroke", theme.bg)
-            .attr("stroke-width", 2.5)
-            .attr("stroke-linejoin", "round")
-            .style("pointer-events", "none");
+        // Labels Layer
+        gLabels.selectAll("*").remove();
+
+        if (currentMode === "india") {
+          const showLabels = document.getElementById("chk-state-labels").checked;
+          if (showLabels) {
+            gLabels.selectAll("text.state-label")
+              .data(window.INDIA_STATES_DATA.features)
+              .enter()
+              .append("text")
+              .attr("class", "state-label")
+              .attr("transform", d => {
+                const p = projection(d.properties.centroid || d3.geoCentroid(d));
+                return p ? `translate(${p[0]}, ${p[1]})` : null;
+              })
+              .text(d => d.properties.ST_NM || d.properties.st_nm)
+              .attr("text-anchor", "middle")
+              .attr("dominant-baseline", "central")
+              .attr("fill", theme.text)
+              .attr("font-size", "7.5px")
+              .attr("font-weight", "600")
+              .attr("paint-order", "stroke")
+              .attr("stroke", theme.bg)
+              .attr("stroke-width", 2.5)
+              .attr("stroke-linejoin", "round")
+              .style("pointer-events", "none");
+          }
+        } else if (currentMode === "global") {
+          const showCountryLabels = document.getElementById("chk-country-labels").checked;
+          const showMicronations = document.getElementById("chk-micronations").checked;
+          const showOceans = document.getElementById("chk-ocean-labels").checked;
+
+          // Ocean Labels
+          if (showOceans && window.WORLD_DATA && window.WORLD_DATA.oceans) {
+            gLabels.selectAll("text.ocean-label")
+              .data(window.WORLD_DATA.oceans)
+              .enter()
+              .append("text")
+              .attr("class", "ocean-label")
+              .attr("transform", d => {
+                const pt = projection(d.centroid);
+                return pt ? `translate(${pt[0]}, ${pt[1]})` : null;
+              })
+              .text(d => d.label || d.name)
+              .attr("text-anchor", "middle")
+              .attr("dominant-baseline", "central")
+              .attr("fill", theme.ocean === '#ffffff' ? '#64748b' : '#3b82f6')
+              .attr("opacity", 0.5)
+              .attr("font-size", "11px")
+              .attr("font-weight", "700")
+              .attr("font-style", "italic")
+              .attr("letter-spacing", "2px")
+              .style("cursor", "pointer")
+              .on("mouseenter", (event, d) => {
+                tooltip.style("display", "block").html(`
+                  <div style="font-size: 12px; line-height: 1.4;">
+                    <strong>🌊 ${d.name}</strong>
+                    ${d.wiki ? '<br><span style="font-size: 10px; color: #38bdf8;">Click to view Wikipedia article ↗</span>' : ''}
+                  </div>
+                `);
+              })
+              .on("mousemove", event => {
+                tooltip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY + 12) + "px");
+              })
+              .on("mouseleave", () => tooltip.style("display", "none"))
+              .on("click", (event, d) => {
+                if (d.wiki) window.open(d.wiki, "_blank");
+              });
+          }
+
+          // Country Labels
+          if (showCountryLabels && window.WORLD_DATA && window.WORLD_DATA.features) {
+            const normalCountries = window.WORLD_DATA.features.filter(f => !f.properties.is_micronation && !f.properties.minor_territory);
+            gLabels.selectAll("text.country-label")
+              .data(normalCountries)
+              .enter()
+              .append("text")
+              .attr("class", "country-label")
+              .attr("transform", d => {
+                const pt = projection(d.properties.centroid || d3.geoCentroid(d));
+                return pt ? `translate(${pt[0]}, ${pt[1]})` : null;
+              })
+              .text(d => d.properties.name)
+              .attr("text-anchor", "middle")
+              .attr("dominant-baseline", "central")
+              .attr("fill", d => (d.properties.name === "India") ? theme.indiaEdge : theme.text)
+              .attr("font-size", d => (d.properties.name === "India") ? "10.5px" : "8px")
+              .attr("font-weight", d => (d.properties.name === "India") ? "800" : "700")
+              .attr("paint-order", "stroke")
+              .attr("stroke", theme.bg)
+              .attr("stroke-width", 2.6)
+              .attr("stroke-linejoin", "round")
+              .style("cursor", "pointer")
+              .on("mouseenter", (event, d) => {
+                tooltip.style("display", "block").html(`
+                  <div style="font-size: 12px; line-height: 1.4;">
+                    <strong>${d.properties.name}</strong>
+                    ${d.properties.wiki ? '<br><span style="font-size: 10px; color: #38bdf8;">Click to view Wikipedia article ↗</span>' : ''}
+                  </div>
+                `);
+              })
+              .on("mousemove", event => {
+                tooltip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY + 12) + "px");
+              })
+              .on("mouseleave", () => tooltip.style("display", "none"))
+              .on("click", (event, d) => {
+                if (d.properties && d.properties.wiki) window.open(d.properties.wiki, "_blank");
+              });
+          }
+
+          // Micronations & Territories (Pins + Names)
+          if (showMicronations && window.WORLD_DATA && window.WORLD_DATA.features) {
+            const micronations = window.WORLD_DATA.features.filter(f => f.properties.is_micronation || f.properties.minor_territory);
+            
+            // Circles for micro territories
+            gLabels.selectAll("circle.micro-dot")
+              .data(micronations)
+              .enter()
+              .append("circle")
+              .attr("class", "micro-dot")
+              .attr("cx", d => {
+                const pt = projection(d.properties.centroid || d3.geoCentroid(d));
+                return pt ? pt[0] : -9999;
+              })
+              .attr("cy", d => {
+                const pt = projection(d.properties.centroid || d3.geoCentroid(d));
+                return pt ? pt[1] : -9999;
+              })
+              .attr("r", 2.2)
+              .attr("fill", "#f59e0b")
+              .attr("stroke", "#ffffff")
+              .attr("stroke-width", 0.7)
+              .style("cursor", "pointer")
+              .on("mouseenter", (event, d) => {
+                tooltip.style("display", "block").html(`
+                  <div style="font-size: 12px; line-height: 1.4;">
+                    <strong>📍 ${d.properties.name}</strong>
+                    <br><span style="font-size: 10px; color: #cbd5e1;">Territory / Micronation</span>
+                    ${d.properties.wiki ? '<br><span style="font-size: 10px; color: #38bdf8;">Click to view Wikipedia article ↗</span>' : ''}
+                  </div>
+                `);
+              })
+              .on("mousemove", event => {
+                tooltip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY + 12) + "px");
+              })
+              .on("mouseleave", () => tooltip.style("display", "none"))
+              .on("click", (event, d) => {
+                if (d.properties && d.properties.wiki) window.open(d.properties.wiki, "_blank");
+              });
+
+            // Labels for micro territories
+            gLabels.selectAll("text.micro-label")
+              .data(micronations)
+              .enter()
+              .append("text")
+              .attr("class", "micro-label")
+              .attr("transform", d => {
+                const pt = projection(d.properties.centroid || d3.geoCentroid(d));
+                return pt ? `translate(${pt[0] + 4}, ${pt[1] - 3})` : null;
+              })
+              .text(d => d.properties.name)
+              .attr("text-anchor", "start")
+              .attr("dominant-baseline", "central")
+              .attr("fill", theme.text)
+              .attr("font-size", "6.5px")
+              .attr("font-weight", "600")
+              .attr("paint-order", "stroke")
+              .attr("stroke", theme.bg)
+              .attr("stroke-width", 2.0)
+              .style("cursor", "pointer")
+              .on("mouseenter", (event, d) => {
+                tooltip.style("display", "block").html(`
+                  <div style="font-size: 12px; line-height: 1.4;">
+                    <strong>📍 ${d.properties.name}</strong>
+                    ${d.properties.wiki ? '<br><span style="font-size: 10px; color: #38bdf8;">Click to view Wikipedia article ↗</span>' : ''}
+                  </div>
+                `);
+              })
+              .on("mousemove", event => {
+                tooltip.style("left", (event.pageX + 12) + "px").style("top", (event.pageY + 12) + "px");
+              })
+              .on("mouseleave", () => tooltip.style("display", "none"))
+              .on("click", (event, d) => {
+                if (d.properties && d.properties.wiki) window.open(d.properties.wiki, "_blank");
+              });
+          }
         }
 
-        // Update Legend
-        if (dataMap && currentMetric !== "none") {
+        // Update Inspector & Legend visibility (Auto-hidden in Global Earth mode)
+        if (currentMode === "global") {
+          inspector.style("display", "none");
+          legendEl.style("display", "none");
+        } else if (dataMap && currentMetric !== "none") {
           legendEl.style("display", "block");
           const metricMeta = window.SAMPLE_DATASETS[currentMetric] || { label: "Legend", unit: "" };
           document.getElementById("legend-title-text").textContent = metricMeta.label;
@@ -1091,8 +1284,9 @@
       });
 
       // Layer Checkboxes
-      ["chk-state-borders", "chk-state-labels", "chk-soi-border", "chk-graticule", "chk-disputed-borders"].forEach(id => {
-        document.getElementById(id).addEventListener("change", updateMap);
+      ["chk-state-borders", "chk-state-labels", "chk-soi-border", "chk-country-labels", "chk-micronations", "chk-ocean-labels", "chk-graticule", "chk-disputed-borders"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("change", updateMap);
       });
 
       // Zoom Controls
