@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Equal Earth World Maps · Official Survey of India Boundary Gallery</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #f97316;
+      --primary: #2563eb;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 0 0 60px 0;
+    }
+    header {
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 24px;
+      text-align: center;
+    }
+    .badge {
+      display: inline-block;
+      background: #431407;
+      color: #fed7aa;
+      border: 1px solid #c2410c;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+    }
+    h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 10px; }
+    p.lead { font-size: 16px; color: var(--text-muted); max-width: 780px; margin: 0 auto; }
+    .container { max-width: 1240px; margin: 40px auto; padding: 0 24px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 28px;
+    }
+    .map-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .map-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+    }
+    .card-img-wrap {
+      background: #000;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+    }
+    .card-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+    .map-card:hover .card-img-wrap img {
+      transform: scale(1.03);
+    }
+    .card-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .card-body h3 { font-size: 18px; margin-bottom: 6px; }
+    .desc { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; flex: 1; }
+    .meta-tag { font-size: 11px; color: #94a3b8; margin-bottom: 16px; font-weight: 500; }
+    .download-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-dl {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-block;
+      transition: opacity 0.15s;
+    }
+    .btn-dl:hover { opacity: 0.85; }
+    .btn-png { background: #2563eb; color: #fff; }
+    .btn-svg { background: #059669; color: #fff; }
+    .btn-pdf { background: #dc2626; color: #fff; }
+    .attribution-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 48px;
+    }
+    .attribution-card h2 { font-size: 20px; margin-bottom: 10px; }
+    code { background: #0f172a; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #f97316; }
+    pre { background: #0f172a; padding: 14px; border-radius: 8px; font-size: 12px; overflow-x: auto; color: #cbd5e1; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="badge">Survey of India Sovereign Boundary Compliant</div>
+    <h1>Equal Earth World Map Publication Gallery</h1>
+    <p class="lead">
+      Open-source, high-resolution Equal Earth maps created with the official Survey of India boundary.
+      Free for academic publication, journalism, digital encyclopedias, and open-source cartography under CC BY 4.0.
+    </p>
+  </header>
+
+  <div class="container">
+    <div class="grid">
+      
+        <div class="map-card">
+          <div class="card-img-wrap">
+            <img src="india_centered.png" alt="Centered on India (78°E)" loading="lazy">
+          </div>
+          <div class="card-body">
+            <h3>Centered on India (78°E)</h3>
+            <p class="desc">Standard official Indian perspective placing India squarely at the central meridian.</p>
+            <div class="meta-tag">Theme: Classic Atlas (Light) · Central Meridian: +78°</div>
+            <div class="download-row">
+              <a href="india_centered.png" download class="btn-dl btn-png">PNG (300 DPI)</a>
+              <a href="india_centered.svg" download class="btn-dl btn-svg">Vector SVG</a>
+              <a href="india_centered.pdf" download class="btn-dl btn-pdf">Vector PDF</a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="map-card">
+          <div class="card-img-wrap">
+            <img src="greenwich_prime.png" alt="Centered on Prime Meridian (0°)" loading="lazy">
+          </div>
+          <div class="card-body">
+            <h3>Centered on Prime Meridian (0°)</h3>
+            <p class="desc">Standard international 0° meridian view with correct Survey of India boundaries.</p>
+            <div class="meta-tag">Theme: Classic Atlas (Light) · Central Meridian: +0°</div>
+            <div class="download-row">
+              <a href="greenwich_prime.png" download class="btn-dl btn-png">PNG (300 DPI)</a>
+              <a href="greenwich_prime.svg" download class="btn-dl btn-svg">Vector SVG</a>
+              <a href="greenwich_prime.pdf" download class="btn-dl btn-pdf">Vector PDF</a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="map-card">
+          <div class="card-img-wrap">
+            <img src="indo_pacific.png" alt="Indo-Pacific Centered (90°E)" loading="lazy">
+          </div>
+          <div class="card-body">
+            <h3>Indo-Pacific Centered (90°E)</h3>
+            <p class="desc">Optimized for Indo-Pacific geopolitical and maritime analysis.</p>
+            <div class="meta-tag">Theme: Academic Publication (Clean) · Central Meridian: +90°</div>
+            <div class="download-row">
+              <a href="indo_pacific.png" download class="btn-dl btn-png">PNG (300 DPI)</a>
+              <a href="indo_pacific.svg" download class="btn-dl btn-svg">Vector SVG</a>
+              <a href="indo_pacific.pdf" download class="btn-dl btn-pdf">Vector PDF</a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="map-card">
+          <div class="card-img-wrap">
+            <img src="india_dark.png" alt="India Centered (Dark Cartography)" loading="lazy">
+          </div>
+          <div class="card-body">
+            <h3>India Centered (Dark Cartography)</h3>
+            <p class="desc">Modern dark-mode aesthetic for presentations and high-contrast digital displays.</p>
+            <div class="meta-tag">Theme: Cartographic Dark · Central Meridian: +78°</div>
+            <div class="download-row">
+              <a href="india_dark.png" download class="btn-dl btn-png">PNG (300 DPI)</a>
+              <a href="india_dark.svg" download class="btn-dl btn-svg">Vector SVG</a>
+              <a href="india_dark.pdf" download class="btn-dl btn-pdf">Vector PDF</a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="map-card">
+          <div class="card-img-wrap">
+            <img src="pacific_centered.png" alt="Pacific Centered (150°E)" loading="lazy">
+          </div>
+          <div class="card-body">
+            <h3>Pacific Centered (150°E)</h3>
+            <p class="desc">Pacific-centric projection with unbroken Asian and American landmasses.</p>
+            <div class="meta-tag">Theme: Classic Atlas (Light) · Central Meridian: +150°</div>
+            <div class="download-row">
+              <a href="pacific_centered.png" download class="btn-dl btn-png">PNG (300 DPI)</a>
+              <a href="pacific_centered.svg" download class="btn-dl btn-svg">Vector SVG</a>
+              <a href="pacific_centered.pdf" download class="btn-dl btn-pdf">Vector PDF</a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="map-card">
+          <div class="card-img-wrap">
+            <img src="americas_centered.png" alt="Americas Centered (-90°W)" loading="lazy">
+          </div>
+          <div class="card-body">
+            <h3>Americas Centered (-90°W)</h3>
+            <p class="desc">Western Hemisphere view showcasing Asian-American connections.</p>
+            <div class="meta-tag">Theme: Classic Atlas (Light) · Central Meridian: -90°</div>
+            <div class="download-row">
+              <a href="americas_centered.png" download class="btn-dl btn-png">PNG (300 DPI)</a>
+              <a href="americas_centered.svg" download class="btn-dl btn-svg">Vector SVG</a>
+              <a href="americas_centered.pdf" download class="btn-dl btn-pdf">Vector PDF</a>
+            </div>
+          </div>
+        </div>
+        
+    </div>
+
+    <div class="attribution-card">
+      <h2>Copy-Paste Citation & Attribution</h2>
+      <p style="color:var(--text-muted); font-size:13px;">
+        All maps in this gallery are released under <strong>Creative Commons Attribution 4.0 International (CC BY 4.0)</strong>.
+        You may freely share, republish, adapt, and use them in books, articles, websites, and broadcasts.
+      </p>
+      <pre>Map Title: Equal Earth Projection (Centered on India / World)
+Data Attribution: Survey of India, Government of India (International Boundaries)
+Projection: Equal Earth (Bojan Šavrič, Tom Patterson, Bernhard Jenny, 2018)
+License: Creative Commons Attribution 4.0 International (CC BY 4.0)</pre>
+    </div>
+  </div>
+
+</body>
+</html>

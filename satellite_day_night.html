@@ -592,6 +592,7 @@
       }
     }
   </style>
+  <script src="timezone-utils.js"></script>
 </head>
 <body>
 
@@ -1242,12 +1243,13 @@
       // 8. Map Click Coordinates & Live Time Popup
       map.on('click', (e) => {
         const lat = e.latlng.lat;
-        let normLon = ((e.latlng.lng + 180) % 360) - 180;
-        if (normLon < -180) normLon += 360;
+        const normLon = wrapLon(e.latlng.lng);
 
-        const iana = ianaFromLon(normLon);
+        // Use a spatial lookup to find the country feature at this coordinate
+        const feature = findFeatureAt(lat, normLon);
+        const iana = resolveIana(lat, normLon, feature?.properties);
         const { localTime, tzOffset } = formatTimeFromIana(iana, getCurrentSimDate());
-        setActiveVisitedTimezone(iana, `${tzOffset}`);
+        setActiveVisitedTimezone(iana, `${tzOffset} (${feature?.properties.name || 'Selected'})`);
 
         const latStr = `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}`;
         const lonStr = `${Math.abs(normLon).toFixed(2)}°${normLon >= 0 ? 'E' : 'W'}`;

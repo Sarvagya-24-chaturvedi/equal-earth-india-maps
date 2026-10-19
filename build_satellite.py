@@ -1339,9 +1339,7 @@ def generate_satellite_html():
       // 8. Map Click Coordinates & Live Time Popup
       map.on('click', (e) => {{
         const lat = e.latlng.lat;
-        let normLon = ((e.latlng.lng + 180) % 360) - 180;
-        if (normLon < -180) normLon += 360;
-
+        const normLon = wrapLon(e.latlng.lng);
         const iana = ianaFromLon(normLon);
         const {{ localTime, tzOffset }} = formatTimeFromIana(iana, getCurrentSimDate());
         setActiveVisitedTimezone(iana, `${{tzOffset}}`);
