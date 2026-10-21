@@ -1,176 +1,122 @@
-# Equal Earth India Maps Toolkit
+# Equal Earth India Maps
 
 [![CI](https://github.com/Sarvagya-24-chaturvedi/equal-earth-india-maps/actions/workflows/ci.yml/badge.svg)](https://github.com/Sarvagya-24-chaturvedi/equal-earth-india-maps/actions)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Boundary: Survey of India](https://img.shields.io/badge/Boundary-Survey_of_India_100%25-green.svg)](https://surveyofindia.gov.in/)
-[![Projection: Equal Earth](https://img.shields.io/badge/Projection-Equal_Earth_EPSG%3A8857-blue.svg)](https://en.wikipedia.org/wiki/Equal_Earth_projection)
-[![Live Demo](https://img.shields.io/badge/Live_Studio-GitHub_Pages-brightgreen.svg)](https://sarvagya-24-chaturvedi.github.io/equal-earth-india-maps/)
+[![Projection: Equal Earth](https://img.shields.io/badge/Projection-Equal_Earth_EPSG%3A8857-informational.svg)](https://en.wikipedia.org/wiki/Equal_Earth_projection)
 
-An authoritative, publication-quality geospatial toolkit, Python library, CLI, and interactive web studio for generating sovereign-compliant **Equal Earth** maps of India (all 28 states & 8 union territories) and the world.
-
-Features 100% official international sovereign boundaries recognized by the **Survey of India (Department of Science & Technology, Government of India)**, mathematically verified equal-area transformations, and data-driven choropleth generation.
+A Python cartography toolkit, command-line interface, and interactive web application for generating Equal Earth (`EPSG:8857`) maps of India and the world, incorporating Survey of India administrative boundary delineations.
 
 ---
 
-## 🌐 Live Web Portals
+## Live Demos
 
-| Portal | URL | Capabilities |
-| :--- | :--- | :--- |
-| **🇮🇳 Equal Earth Geospatial Studio** | [Open Studio](https://sarvagya-24-chaturvedi.github.io/equal-earth-india-maps/) | Interactive India state choropleth studio, custom CSV upload, color palettes, layer toggling, and 300 DPI PNG / SVG / PDF export. |
-| **🛰️ Topographic Satellite & Day/Night** | [Open Satellite View](https://sarvagya-24-chaturvedi.github.io/equal-earth-india-maps/satellite_day_night.html) | Spaceborne satellite basemaps (NASA Blue Marble, MODIS, Black Marble), real-time solar terminator, NASA daily snow coverage, and visited location live climate readouts. |
+- **Main Map & Thematic Studio**: [sarvagya-24-chaturvedi.github.io/equal-earth-india-maps/index.html](https://sarvagya-24-chaturvedi.github.io/equal-earth-india-maps/index.html)
+- **Satellite & Day/Night Viewer**: [sarvagya-24-chaturvedi.github.io/equal-earth-india-maps/satellite_day_night.html](https://sarvagya-24-chaturvedi.github.io/equal-earth-india-maps/satellite_day_night.html)
 
 ---
 
-## 🗺️ Verified Map Outputs
+## Visual Previews
 
-### 1. Publication-Ready Labeled India Map (28 States & 8 UTs)
-![India Publication Labeled](examples/outputs/02_india_publication_labeled.png)
+| India Administrative & State Labels | Census 2011 Literacy Rate Choropleth |
+| :---: | :---: |
+| ![India Administrative Map](examples/outputs/02_india_publication_labeled.png) | ![India Literacy Choropleth](examples/outputs/03_india_literacy_choropleth.png) |
 
-### 2. Data-Driven Thematic Choropleth (Census 2011 Literacy Rate)
-![India Literacy Choropleth](examples/outputs/03_india_literacy_choropleth.png)
-
-### 3. State-Level Renewable Energy Distribution (MNRE 2023)
-![India Renewable Energy Map](examples/outputs/04_india_renewable_energy.png)
-
-### 4. Global Equal Earth Map Centered on India (78°E)
-![Equal Earth India Centered](equal_earth_india.png)
+| Global Equal Earth Map (Centered on India, 78°E) | Renewable Energy Installed Capacity (MNRE 2023) |
+| :---: | :---: |
+| ![Global Equal Earth India Centered](equal_earth_india.png) | ![India Renewable Energy Map](examples/outputs/04_india_renewable_energy.png) |
 
 ---
 
-## 🎯 Why This Toolkit Exists
+## Key Features
 
-Most standard international cartography packages (Natural Earth, Cartopy defaults, Leaflet, and Mapbox basemaps) misrepresent Indian borders by omitting northern Ladakh, Gilgit-Baltistan, Aksai Chin, or Siachen Glacier, or delineating Arunachal Pradesh with disputed lines.
+### 1. Equal Earth Projection & Centering
+- **True Equal-Area Projection**: Implements the Equal Earth pseudocylindrical formulation (`EPSG:8857`) by Šavrič, Jenny, and Patterson (2018), preserving relative geographic areas without the high-latitude distortion of Mercator.
+- **Configurable Central Meridian**: Default centering on India (78°E), the Prime Meridian (0°), or any specified country or ocean coordinate.
+- **Verified Math Pipeline**: Forward and inverse polynomial coordinate transformations benchmarked against PROJ 9 reference points.
 
-Under the official **Survey of India (SOI)** delineation:
-1. The Union Territories of **Jammu & Kashmir** and **Ladakh** (including Aksai Chin, Siachen, and Gilgit-Baltistan) are integral parts of the sovereign territory of India.
-2. The state of **Arunachal Pradesh** is an integral part of India.
-3. The post-2019 administrative reorganization (separating J&K and Ladakh, and merging Dadra & Nagar Haveli and Daman & Diu) is strictly observed.
+### 2. India Boundary Data & Attribution
+- **Survey of India Alignment**: Depicts official administrative boundaries as specified by the Survey of India (Department of Science & Technology), including the Union Territories of Jammu & Kashmir and Ladakh, as well as Arunachal Pradesh.
+- **Post-2019 Reorganization**: Reflects the current 28 states and 8 union territories, including the bifurcation of Jammu & Kashmir and Ladakh, and the merger of Dadra & Nagar Haveli and Daman & Diu.
+- **Geometry Validation**: GeoJSON boundaries cleaned, repaired, and validated for topological consistency using Shapely.
 
-This toolkit resolves these cartographic discrepancies using the **Equal Earth projection** (`EPSG:8857`), an equal-area pseudocylindrical projection developed in 2018 by Bojan Šavrič, Bernhard Jenny, and Tom Patterson. Unlike Mercator, it avoids extreme polar exaggeration while presenting nations in their true relative proportions.
+### 3. Satellite Imagery & Day/Night Visualization
+- **NASA GIBS Tile Layers**: Connects to NASA Global Imagery Browse Services for Blue Marble (bathymetry/topography), MODIS Terra TrueColor, and Black Marble (night lights).
+- **Daily Snow & Ice Cover**: Integrates NASA Terra/MODIS daily snow cover imagery.
+- **Astronomical Solar Terminator**: Calculates real-time subsolar position and twilight boundaries using Greenwich Mean Sidereal Time (GMST) and solar declination algorithms.
+- **Coordinate-Aware Timezones**: Dynamic IANA timezone detection based on clicked map coordinates across multi-timezone nations.
 
----
-
-## ✨ Features
-
-- **Survey of India Sovereign Boundaries**: Full legal compliance with Survey of India political boundaries.
-- **Complete Post-2019 State Reorganization**: All 28 States and 8 Union Territories with verified topological geometry validity.
-- **Mathematical Accuracy & Verification**: Exact polynomial equations from Šavrič et al. (2019) benchmarked against PROJ 9 reference values ($< 0.5\text{ mm}$ error). Forward, inverse, and equal-area preservation ($s_A \equiv 1.0$) tests.
-- **Data-Driven Choropleth Mapping**: Automatic name reconciliation, equal-interval and quantile binning, custom CSV import, and publication legends.
-- **Authentic Built-in Sample Datasets**:
-  - Census 2011 State-wise Literacy Rates (%)
-  - Forest Survey of India (ISFR 2021) Forest Cover (%)
-  - Ministry of New and Renewable Energy (MNRE 2023) Renewable Capacity (MW)
-  - Census 2011 Population Density (persons/km²)
-- **Multi-Format Publication Export**:
-  - **PNG**: Configurable raster resolutions (150, 300, 600 Ultra-HD DPI).
-  - **SVG**: Lossless vector format with styled paths and embedded metadata.
-  - **PDF**: Vector PDF suitable for academic journals and print reports.
-- **Curated Cartographic Themes**:
-  - `atlas_light`: Classic light atlas with warm land and gold sovereign outline.
-  - `academic_clean`: Minimalist greyscale theme optimized for research papers.
-  - `carto_dark`: High-contrast dark theme with glowing accents.
-  - `emerald_nature`: Environmental sage and mint palette.
-  - `sunset_warm`: Terracotta and sunset earth tones.
-- **Interactive Web Studio**: Responsive HTML5 application with zero backend dependencies, instant live choropleth previews, and browser-side vector exports.
+### 4. Map Export & Publishing Workflow
+- **Multi-Format Output**: High-resolution raster PNG (150, 300, and 600 DPI), scalable vector SVG, and vector PDF.
+- **Data-Driven Thematic Mapping**: Built-in state-name normalizer matching Government of India datasets (Census 2011, ISFR 2021, MNRE 2023) and user-supplied CSV files.
+- **Cartographic Themes**: Preconfigured styles including `atlas_light`, `academic_clean`, `carto_dark`, `emerald_nature`, and `sunset_warm`.
 
 ---
 
-## 🚀 Installation
+## Requirements & Offline / Online Scope
 
-### Prerequisites
-- Python 3.9, 3.10, 3.11, or 3.12
-- Standard geospatial libraries (`libgeos`, `libproj`)
+### Software Requirements
+- **Python**: 3.9, 3.10, 3.11, or 3.12
+- **Core Dependencies**: `matplotlib>=3.8.0`, `cartopy>=0.22.0`, `shapely>=2.0.0`, `numpy>=1.24.0`, `pyproj>=3.6.0`
+- **Optional / Dev**: `pytest>=8.0.0`, `pytest-cov>=4.0.0`
 
-### Setup in a Virtual Environment
+### Offline vs. Online Capabilities
+- **Local / Fully Offline**:
+  - Python CLI and SDK (`equal_earth` package).
+  - Administrative boundary rendering, choropleth generation, and projection math.
+  - Interactive D3 studio (`index.html` / `equal_earth_interactive.html`) using bundled `world_data.json`.
+- **Requires Network Access**:
+  - External satellite tile services in `satellite_day_night.html` (NASA GIBS tiles, ESRI satellite imagery).
+
+---
+
+## Quick Start
+
+### 1. Installation
 
 ```bash
-# 1. Clone repository
+# Clone the repository
 git clone https://github.com/Sarvagya-24-chaturvedi/equal-earth-india-maps.git
 cd equal-earth-india-maps
 
-# 2. Create and activate virtual environment
+# Create and activate a virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
 
-# 3. Install dependencies
+# Install dependencies and the package
 pip install -r requirements.txt
-
-# 4. Install toolkit in editable mode
 pip install -e .
 ```
 
----
+### 2. Command-Line Interface (CLI)
 
-## 💻 CLI Usage
-
-The toolkit provides a unified command-line tool `equal-earth`:
-
-### 1. Generate India State & Thematic Maps
+The package provides the `equal-earth` executable:
 
 ```bash
-# Standard administrative divisions map
+# Generate a standard publication-ready India map (PNG, 300 DPI)
 equal-earth india --theme atlas_light -o india_admin.png
 
-# Data-driven choropleth using built-in Census 2011 literacy data
+# Generate a choropleth using built-in Census 2011 literacy data
 equal-earth india --choropleth literacy --palette YlGnBu -o india_literacy.png
 
-# Forest cover choropleth with custom 300 DPI resolution
-equal-earth india --choropleth forest_cover --palette Greens --dpi 300 -o india_forest.png
+# Generate a choropleth from a custom CSV file
+equal-earth india --choropleth path/to/data.csv --palette Oranges -o custom_choro.png
 
-# Renewable energy distribution in dark theme
-equal-earth india --choropleth renewable_energy --theme carto_dark --palette Viridis -o india_renewable.png
-
-# Custom CSV choropleth mapping
-equal-earth india --choropleth path/to/my_data.csv --palette Oranges -o custom_map.png
-
-# Vector format exports
-equal-earth india --theme academic_clean -o india_vector.svg
+# Export as vector PDF or SVG
 equal-earth india --theme academic_clean -o india_vector.pdf
-```
+equal-earth india --theme academic_clean -o india_vector.svg
 
-### 2. Generate Global Equal Earth World Maps
+# Generate a global Equal Earth map centered on India (78°E)
+equal-earth global --center-lon 78.0 -o world_india.png
 
-```bash
-# Centered on India (78°E, default)
-equal-earth global --center-lon 78.0 -o world_india_centered.png
-
-# Centered on Prime Meridian (0°)
-equal-earth global --center-lon 0.0 -o world_prime_meridian.png
-
-# Center on specific nation or ocean
-equal-earth global --target Brazil -o world_brazil.png
-equal-earth global --target "Indian Ocean" -o world_indian_ocean.png
-```
-
-### 3. Coordinate Transformation & Benchmarking
-
-```bash
-# Run authoritative PROJ 9 reference benchmark verification
+# Verify projection math against PROJ reference values
 equal-earth project --benchmark
 
-# Forward projection: (lon, lat) -> (X, Y) in meters
-equal-earth project --forward 78.0 20.0
-
-# Inverse projection: (X, Y) in meters -> (lon, lat)
-equal-earth project --inverse 7264273.592 2556518.151
-```
-
-### 4. Launch Interactive Web Studio
-
-```bash
-# Launch interactive geospatial studio in default browser
+# Launch the interactive web studio in your default browser
 equal-earth web
-
-# Launch NASA satellite & real-time day/night viewer
-equal-earth web --satellite
 ```
 
----
-
-## 🐍 Python SDK / API Quickstart
-
-You can import `equal_earth` directly into your Python scripts or Jupyter Notebooks:
+### 3. Python API Quickstart
 
 ```python
 from equal_earth import (
@@ -182,16 +128,16 @@ from equal_earth import (
     inverse,
 )
 
-# 1. Generate an India administrative map
+# 1. Render an administrative map of India
 render_india_map(
     theme="academic_clean",
     show_labels=True,
     title="Republic of India",
     output_path="india_map.png",
-    dpi=300
+    dpi=300,
 )
 
-# 2. Generate a data-driven choropleth map
+# 2. Render a data-driven choropleth map
 data = load_sample_dataset("literacy")
 choro = generate_choropleth(data, palette="YlGnBu", num_classes=5)
 
@@ -200,122 +146,100 @@ render_india_map(
     title="India — Literacy Rate (Census 2011)",
     legend_title="Literacy (%)",
     unit="%",
-    output_path="literacy_choropleth.pdf"
+    output_path="india_literacy.png",
 )
 
-# 3. Direct Equal Earth mathematical transformations
+# 3. Direct Equal Earth coordinate projection
 x, y = forward(lon_deg=78.0, lat_deg=20.0)
-print(f"Projected coordinates: X={x:.2f} m, Y={y:.2f} m")
-
 lon, lat = inverse(x=x, y=y)
-print(f"Inverted coordinates: Lon={lon:.4f}°, Lat={lat:.4f}°")
+```
+
+### 4. Rebuilding Standalone Web Pages
+
+```bash
+# Rebuild the D3-based interactive studio (index.html)
+python3 map.py
+
+# Rebuild the Leaflet-based NASA satellite & day/night viewer
+python3 build_satellite.py
 ```
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 equal-earth-india-maps/
-├── equal_earth/                  # Core Python Mapping Engine
-│   ├── __init__.py               # Public API exports
-│   ├── projection.py             # Equal Earth math (forward, inverse, benchmarks)
-│   ├── data.py                   # Data loader, geometry repair & state normalizer
-│   ├── styling.py                # Themes and color palettes
-│   ├── thematic.py               # Choropleth data matching & classification
-│   ├── renderer.py               # Cartopy & Matplotlib rendering pipeline
-│   ├── web_builder.py            # Interactive web studio HTML generator
-│   ├── cli.py                    # Unified CLI command handler
-│   └── exceptions.py             # Custom toolkit exception hierarchy
+├── equal_earth/                  # Core Python mapping package
+│   ├── projection.py             # Equal Earth math (forward/inverse & PROJ benchmarks)
+│   ├── data.py                   # Boundary loader, geometry validation & name normalizer
+│   ├── styling.py                # Color palettes and cartographic themes
+│   ├── thematic.py               # Choropleth classification & data joins
+│   ├── renderer.py               # Matplotlib & Cartopy rendering pipeline
+│   ├── web_builder.py            # Web studio page builder
+│   ├── cli.py                    # Command-line interface implementation
+│   └── exceptions.py             # Custom toolkit exception classes
 ├── data/
-│   ├── india_states.geojson      # 36 States & UTs (Survey of India compliant)
-│   └── sample_datasets/          # Authentic Census / ISFR / MNRE datasets
-│       ├── india_literacy_2011_census.csv
-│       ├── india_forest_cover_2021.csv
-│       ├── india_renewable_energy_2023.csv
-│       └── india_population_density_2011.csv
+│   ├── india_states.geojson      # India 28 states & 8 UTs (Survey of India alignment)
+│   └── sample_datasets/          # Built-in CSV datasets (Census 2011, ISFR, MNRE)
 ├── docs/
-│   └── DATA_PROVENANCE.md        # Comprehensive dataset sources & licenses
-├── examples/                     # Reproducible example scripts
-│   ├── 01_india_states.py
+│   └── DATA_PROVENANCE.md        # Comprehensive dataset documentation & sources
+├── examples/
+│   ├── 01_india_states.py        # Example: Clean administrative boundaries
 │   ├── 02_publication_labeled_map.py
-│   ├── 03_india_choropleth.py
+│   ├── 03_india_choropleth.py    # Example: Thematic mapping
 │   ├── 04_renewable_energy_choropleth.py
-│   ├── 05_high_res_export.py
-│   └── outputs/                  # Real generated example map files
-├── tests/                        # Automated Pytest Suite (30 tests)
-│   ├── conftest.py
-│   ├── test_projection.py
-│   ├── test_data.py
-│   ├── test_thematic.py
-│   ├── test_renderer.py
-│   └── test_cli.py
-├── .github/workflows/ci.yml       # GitHub Actions automated CI testing
-├── world_data.json               # Global countries with official SOI India border
-├── equal_earth_interactive.html  # Compiled standalone web studio
-├── satellite_day_night.html      # NASA Topographic Satellite & Day/Night Viewer
-├── index.html                    # Root web entrypoint
-├── pyproject.toml                # Standard Python package configuration
-├── setup.py                      # Compatibility setup script
-└── requirements.txt              # Pinned dependencies
+│   ├── 05_high_res_export.py     # Example: 600 DPI, SVG, PDF export
+│   └── outputs/                  # Generated sample maps
+├── tests/                        # Automated test suite (pytest)
+├── world_data.json               # Global country geometries with SOI India border
+├── index.html                    # Interactive web studio (Equal Earth / D3)
+├── satellite_day_night.html      # NASA satellite & day/night viewer (Leaflet)
+├── map.py                        # Standalone studio builder script
+├── build_satellite.py            # Standalone satellite portal builder script
+├── pyproject.toml                # Package configuration & entry points
+└── requirements.txt              # Core Python dependencies
 ```
 
 ---
 
-## 🧪 Testing
+## Testing
 
-The automated test suite covers mathematical projection benchmarks, geometry validity, state name normalization, choropleth generation, rendering across themes, multi-format export, and CLI commands.
+The automated test suite verifies coordinate transformation benchmarks, geometry loading, state name normalization, choropleth generation, theme styling, multi-format exports, and CLI execution.
 
-Run all tests with:
+Run the test suite with:
 
 ```bash
-pytest tests/ -v --cov=equal_earth
+pytest tests/ -v
 ```
 
-All 30 unit and integration tests pass with 100% success rate.
+---
+
+## Data Sources, Attribution & Limitations
+
+- **Territorial Boundaries**: Administrative boundaries for India follow delineations published by the **Survey of India (Department of Science & Technology, Government of India)**.
+  - *Cartographic Note*: Boundaries reflect official Indian cartographic specifications. Third-party international basemaps and tile providers may display differing boundary lines or lines of control. This project is an independent open-source toolkit and does not imply official government endorsement or certification.
+- **Statistical Datasets**:
+  - *Census of India (2011)*: Office of the Registrar General & Census Commissioner.
+  - *India State of Forest Report (ISFR 2021)*: Forest Survey of India.
+  - *Renewable Energy Capacity (2023)*: Ministry of New and Renewable Energy & Central Electricity Authority.
+- **Equal Earth Projection**: Developed by Bojan Šavrič, Bernhard Jenny, and Tom Patterson (2018). Reference: *A polynomial equation for the Equal Earth map projection*, International Journal of Geographical Information Science, 33(3), 454–465.
+- **Satellite Imagery**: NASA Global Imagery Browse Services (GIBS), part of the NASA Earth Observing System Data and Information System (EOSDIS).
+- For complete provenance details, refer to [`docs/DATA_PROVENANCE.md`](docs/DATA_PROVENANCE.md).
 
 ---
 
-## 📖 Data Provenance & Citations
+## Contributing
 
-Detailed documentation of datasets, coordinate systems, processing pipelines, and licenses is available in [`docs/DATA_PROVENANCE.md`](docs/DATA_PROVENANCE.md).
-
-- **Boundary Alignment**: *Survey of India (SOI), Department of Science & Technology, Government of India*.
-- **Statistical Sources**:
-  - *Census of India (2011)*, Office of the Registrar General & Census Commissioner.
-  - *India State of Forest Report (ISFR 2021)*, Forest Survey of India.
-  - *Renewable Energy Capacity (2023)*, Ministry of New and Renewable Energy & Central Electricity Authority.
-- **Projection Reference**:
-  - Šavrič, B., Jenny, B., & Patterson, T. (2019). *A polynomial equation for the Equal Earth map projection*. International Journal of Geographical Information Science, 33(3), 454-465.
+Contributions and feedback are welcome:
+1. Ensure territorial boundary geometry conforms to official Survey of India delineations.
+2. Maintain mathematical consistency with the Equal Earth projection specification.
+3. Add unit tests for any new features or bug fixes under `tests/`.
+4. Open an issue or submit a pull request on GitHub.
 
 ---
 
-## 🤝 Contributing
+## License
 
-Contributions are welcome! Please follow these guidelines:
-1. Ensure all territorial boundaries adhere strictly to the official Survey of India delineations.
-2. Maintain equal-area mathematical accuracy and test changes with `pytest tests/`.
-3. Submit pull requests with clear descriptions of additions or corrections.
-
----
-
-## 📄 License
-
-- **Source Code**: Released under the [MIT License](LICENSE).
-- **Cartographic Outputs & Datasets**: Released under [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
-- **Attribution**: *Survey of India, Department of Science & Technology, Government of India*.
-
----
-
-## 🗺️ Roadmap
-
-- [x] Full Survey of India sovereign boundary alignment.
-- [x] Post-2019 administrative reorganization (28 States + 8 UTs).
-- [x] Mathematical forward & inverse Equal Earth engine with PROJ 9 benchmarks.
-- [x] Automated data-driven choropleth engine with sample Government of India datasets.
-- [x] Multi-format publication export (300/600 DPI PNG, SVG, PDF).
-- [x] Interactive web studio with live customization and custom CSV import.
-- [x] Topographic spaceborne satellite & day/night solar terminator portal.
-- [x] Automated test suite and GitHub Actions CI.
-- [ ] District-level boundary mapping for select states (contingent on official Census dataset availability).
-- [ ] Additional choropleth classification algorithms (Natural Breaks / Fisher-Jenks).
+- **Source Code**: [MIT License](LICENSE).
+- **Documentation & Data**: Dataset sources retain their respective original licenses (see [`docs/DATA_PROVENANCE.md`](docs/DATA_PROVENANCE.md)).
